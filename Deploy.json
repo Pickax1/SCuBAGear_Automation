@@ -31,7 +31,7 @@
       },
       "_artifactsLocation": {
         "type": "string",
-        "defaultValue": "https://github.com/Pickax1/SCuBAGear_Automation/blob/main/",
+        "defaultValue": "https://github.com/Pickax1/SCuBAGear_Automation/",
         "metadata": {
           "description": "URI to artifacts location"
         }

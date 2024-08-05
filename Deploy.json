@@ -221,7 +221,7 @@
           "logProgress": false,
           "logVerbose": true,
           "publishContentLink": {
-            "uri": "https://raw.githubusercontent.com/Christopher-Vaughan-MSSA/scubaweb_templates/main/src/scuba_aadrunbook.ps1",
+            "uri": "https://github.com/Pickax1/SCuBAGear_Automation/blob/main/src/scuba_aadrunbook.ps1",
             "version": "1"
           }
         }

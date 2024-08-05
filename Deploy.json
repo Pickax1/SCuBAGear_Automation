@@ -31,7 +31,7 @@
       },
       "_artifactsLocation": {
         "type": "string",
-        "defaultValue": "https://github.com/Christopher-Vaughan-MSSA/scubaweb_templates/",
+        "defaultValue": "https://github.com/Pickax1/SCuBAGear_Automation/blob/main/",
         "metadata": {
           "description": "URI to artifacts location"
         }

@@ -190,7 +190,7 @@
         "asrScripts": {
 			"runbooks": [{
 				"name": "scuba_runbook",
-				"url": "[uri(parameters('_artifactsLocation'), 'src/scuba_runbook.ps1')]",
+				"url": "[uri(parameters('_artifactsLocation'), 'src/Run_SCuBAGear.ps1')]",
 				"version": "1.0.0.0",
 				"type": "PowerShell",
 				"description": "Run ScubaGear"
@@ -516,8 +516,7 @@
                 "logProgress": false,
                 "logActivityTrace": 0,
                 "publishContentLink": {
-					"uri": "https://raw.githubusercontent.com/Pickax1/SCuBAGear_Automation/blob/main/src/Create_Self-Signed_Certificate.ps1",
-					"version": "1"
+					"uri": "https://raw.githubusercontent.com/Pickax1/SCuBAGear_Automation/main/src/Create_Self-Signed_Certificate.ps1"
 				}
             }
         },
@@ -536,8 +535,7 @@
                 "logProgress": false,
                 "logActivityTrace": 0,
                 "publishContentLink": {
-					"uri": "https://raw.githubusercontent.com/Pickax1/SCuBAGear_Automation/blob/main/src/Run_SCuBAGear.ps1",
-					"version": "1"
+					"uri": "https://raw.githubusercontent.com/Pickax1/SCuBAGear_Automation/main/src/Run_SCuBAGear.ps1"
 				}
             }
         },

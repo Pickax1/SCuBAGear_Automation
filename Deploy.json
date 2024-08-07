@@ -155,7 +155,7 @@
         },
         "hybridRunbookWorkerName": {
             "type": "string",
-            "defaultValue": "Worker"
+            "defaultValue": "SCuBA"
         }
     },
     "variables": {
@@ -621,7 +621,7 @@
                 "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmname'))]"
             ],
             "properties": {
-                "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmname'))]"
+                "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('VmName'))]"
             }
         }
 	]

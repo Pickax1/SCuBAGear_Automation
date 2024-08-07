@@ -499,12 +499,7 @@
             "name": "[concat(parameters('AutomationAccountName'), '/', 'SCuBA_Hybrid_Worker_Group')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
-            ],
-            "properties": {
-                "credential": {
-                    "Name": "[parameters('adminUserName')]"
-                }
-            }
+            ]
         },      
         {
             "type": "Microsoft.Automation/automationAccounts/runbooks",

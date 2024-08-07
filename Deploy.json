@@ -502,9 +502,7 @@
             ],
             "properties": {
                 "credential": {
-                    "Name": "[parameters('adminUserName')]",
-                    "Password": "[parameters('adminPassword')]"
-
+                    "Name": "[parameters('adminUserName')]"
                 }
             }
         },      
@@ -517,10 +515,15 @@
                 "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
             ],
             "properties": {
+                "description": "",
                 "runbookType": "PowerShell",
-                "logVerbose": false,
+                "logVerbose": true,
                 "logProgress": false,
-                "logActivityTrace": 0
+                "logActivityTrace": 0,
+                "publishContentLink": {
+					"uri": "https://raw.githubusercontent.com/Pickax1/SCuBAGear_Automation/blob/main/src/Create_Self-Signed_Certificate.ps1",
+					"version": "1"
+				}
             }
         },
         {
@@ -532,10 +535,15 @@
                 "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
             ],
             "properties": {
+                "description" : "",
                 "runbookType": "PowerShell",
-                "logVerbose": false,
+                "logVerbose": true,
                 "logProgress": false,
-                "logActivityTrace": 0
+                "logActivityTrace": 0,
+                "publishContentLink": {
+					"uri": "https://raw.githubusercontent.com/Pickax1/SCuBAGear_Automation/blob/main/src/Run_SCuBAGear.ps1",
+					"version": "1"
+				}
             }
         },
         {

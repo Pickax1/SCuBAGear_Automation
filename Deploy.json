@@ -153,10 +153,6 @@
         "resourcegroupname": {
             "type": "string",
             "defaultValue": "SCuBA_Automation"
-        },
-        "hybridRunbookWorkerName": {
-            "type": "string",
-            "defaultValue": "SCuBA"
         }
     },
     "variables": {
@@ -591,19 +587,6 @@
             "properties": {
                 "isEncrypted": false,
                 "value": "[concat('\"','update me','\"')]"
-            }
-        },
-        {
-            "type": "Microsoft.Automation/automationAccounts/hybridRunbookWorkerGroups/hybridRunbookWorkers",
-            "apiVersion": "2023-11-01",
-            "name": "[concat(parameters('AutomationAccountName'), '/', 'SCuBA_Hybrid_Worker_Group', '/', parameters('hybridRunbookWorkerName'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Automation/automationAccounts/hybridRunbookWorkerGroups', parameters('AutomationAccountName'), 'SCuBA_Hybrid_Worker_Group')]",
-                "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]",
-                "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
-            ],
-            "properties": {
-                "vmResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
             }
         }
 	]

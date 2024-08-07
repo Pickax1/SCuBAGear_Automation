@@ -502,7 +502,7 @@
             ],
             "properties": {
                 "credential": {
-                    "UserName": "[parameters('adminUserName')]",
+                    "Name": "[parameters('adminUserName')]",
                     "Password": "[parameters('adminPassword')]"
 
                 }

@@ -16,12 +16,13 @@
 Connect-MgGraph
 
 # Define some variables for later use
-$SCuBAVM = Get-AzVM -Name SCuBA
+$RG = Read-Host "Enter your Resource Group Name:"
+$SCuBAVM = Get-AzVM -Name SCuBA -ResourceGroupName $RG
 $VMResourceGroup = $SCuBAVM.Id.Split('/')[4]
 $VmId = $SCuBAVM.Id
 $VM_ID = $SCuBAVM.VmId
 $VMName = $SCuBAVM.Name
-$AutoAccountName = 'scubarunbook'
+$AutoAccountName = (Get-AzAutomationAccount -ResourceGroupName $RG).AutomationAccountName
 
 ########################################
 # Step 1 - Create the certificate on VM
@@ -186,7 +187,21 @@ foreach ($role in $roles) {
 ################################################
 # Step 3 - Add the VM to the Hybrid Worker Group
 ################################################
-$HybridGroupName = (Get-AzAutomationHybridWorkerGroup -ResourceGroupName $VMResourceGroup -AutomationAccountName $AutoAccountName).Name
+# Install hybrid worker extension on VM
+$Location = (Get-AzAutomationAccount -ResourceGroupName $VMResourceGroup).Location
+$VMLocation = $SCuBAVM.Location
+
+# Construct the Registration URL
+$registrationUrl = "https://$($autoAccountName).$($location).azure-automation.net"
+
+# Install the Hybrid Worker extension
+Set-AzVMExtension -ResourceGroupName $RG -VMName $vmName -Location $VMlocation `
+    -Name "HybridWorkerExtension" -Publisher "Microsoft.Azure.Automation.HybridWorker" `
+    -ExtensionType "HybridWorkerForWindows" -TypeHandlerVersion "1.1" -Settings $settings `
+    -EnableAutomaticUpgrade $true
+
+# Add SCuBA to the Hybrid Worker Group
+$HybridGroupName = (Get-AzAutomationHybridWorkerGroup -ResourceGroupName $RG -AutomationAccountName $AutoAccountName).Name
 $HybridWorkerParams = @{
     Name = $VM_ID
     AutomationAccountName = $AutoAccountName
@@ -195,6 +210,9 @@ $HybridWorkerParams = @{
     ResourceGroupName = $VMResourceGroup
 }
 New-AzAutomationHybridRunbookWorker @HybridWorkerParams
+
+Write-Output "Restarting ($SCuBAVM).Name to jump start hybrid worker connection"
+$SCuBAVM | Restart-AzVM
 
 ##########
 # Cleanup

@@ -13,10 +13,11 @@
 
 ## Requires Az.Accounts,
 
-Connect-MgGraph
-
 # Define some variables for later use
 $RG = Read-Host "Enter your Resource Group Name:"
+# Add available options
+
+Write-Output
 $SCuBAVM = Get-AzVM -Name SCuBA -ResourceGroupName $RG
 $VMResourceGroup = $SCuBAVM.Id.Split('/')[4]
 $VmId = $SCuBAVM.Id
@@ -34,7 +35,7 @@ Try{
 
     `$SCuBACertParams = @{
         CertStoreLocation = "cert:\LocalMachine\My" # Needed since runbook runs as SYSTEM
-        Subject = "CN=SCuBAAutomationCertTest"
+        Subject = "CN=SCuBAAutomationCert"
         NotAfter = (Get-Date).AddYears(1) # Cert will expire 1 year after issued
     }
 
@@ -55,6 +56,7 @@ Try{
     return `$FullOutput
 
     # Cleanup
+    sleep 5
     Remove-Item C:\Users\SCuBA\test.txt -Force -Confirm:`$False
 
 }Catch{
@@ -178,6 +180,10 @@ Add-GraphApiRoleToSP -ApplicationName $SP.DisplayName -GraphApiRole $roles -Toke
 # https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#service-principal
 $roles = @("Global Reader")
 
+# Connect MgGraph
+Write-Output "Connecting to Microsoft Graph to add Service Principal $($SP.DisplayName) to $($Roles)"
+Connect-MgGraph -Scopes EntitlementManagement.Read.All,EntitlementManagement.ReadWrite.All
+
 # Assign roles
 foreach ($role in $roles) {
     $roleDefinition = Get-MgRoleManagementDirectoryRoleDefinition -Filter "displayName eq '$role'"
@@ -211,8 +217,8 @@ $HybridWorkerParams = @{
 }
 New-AzAutomationHybridRunbookWorker @HybridWorkerParams
 
-Write-Output "Restarting ($SCuBAVM).Name to jump start hybrid worker connection"
-$SCuBAVM | Restart-AzVM
+Write-Output "Restarting Hybrid Worker Service on $($SCuBAVM.Name) Virtual Machine to jump start hybrid worker connection"
+# Add code to restart the service
 
 ##########
 # Cleanup

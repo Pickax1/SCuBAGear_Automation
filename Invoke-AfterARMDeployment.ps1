@@ -17,7 +17,7 @@
 $RG = Read-Host "Enter your Resource Group Name:"
 # Add available options
 
-Write-Output
+Write-Output "Retrieving information on SCuBA VM"
 $SCuBAVM = Get-AzVM -Name SCuBA -ResourceGroupName $RG
 $VMResourceGroup = $SCuBAVM.Id.Split('/')[4]
 $VmId = $SCuBAVM.Id
@@ -47,17 +47,17 @@ Try{
     `$EndDate = (`$Cert).NotAfter
 
     # Test
-    echo "Thumbprint: `$Thumbprint" >> C:\Users\SCuBA\test.txt
-    echo "KeyValue: `$KeyValue" >> C:\Users\SCuBA\test.txt
-    echo "StartDate: `$StartDate" >> C:\Users\SCuBA\test.txt
-    echo "EndDate: `$EndDate" >> C:\Users\SCuBA\test.txt
+    echo "Thumbprint: `$Thumbprint" >> C:\test.txt
+    echo "KeyValue: `$KeyValue" >> C:\test.txt
+    echo "StartDate: `$StartDate" >> C:\test.txt
+    echo "EndDate: `$EndDate" >> C:\test.txt
 
-    `$FullOutput = GC C:\Users\SCuBA\Test.txt
+    `$FullOutput = GC C:\Test.txt
     return `$FullOutput
 
     # Cleanup
     sleep 5
-    Remove-Item C:\Users\SCuBA\test.txt -Force -Confirm:`$False
+    Remove-Item C:\test.txt -Force -Confirm:`$False
 
 }Catch{
     Write-Error -Message `$_.Exception

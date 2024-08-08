@@ -165,13 +165,18 @@ function Add-GraphApiRoleToSP {
 $TenantID = (Get-AzContext).Tenant.Id
 Connect-AzAccount -TenantId $TenantID
 $token = Get-AzAccessToken -ResourceUrl "https://graph.microsoft.com"
+# Non-Interactive Permission Requirements - https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md
 $roles = @(
-    "Directory.Read.All", 
-    "GroupMember.Read.All", 
-    "Organization.Read.All", 
-    "Policy.Read.All", 
-    "RoleManagement.Read.Directory", 
-    "User.Read.All"
+    "Directory.Read.All", #Entra ID
+    "GroupMember.Read.All", #Entra ID
+    "Organization.Read.All", #Entra ID
+    "Policy.Read.All", #Entra ID
+    "RoleManagement.Read.Directory", #Entra ID
+    "User.Read.All", #Entra ID
+    "PrivilegedEligibilitySchedule.Read.AzureADGroup", #Entra ID
+    "PrivilegedAccess.Read.AzureADGroup", #Entra ID
+    "RoleManagementPolicy.Read.AzureADGroup", #Entra ID
+    "Sites.FullControl.All" # SharePoint
 )
 Add-GraphApiRoleToSP -ApplicationName $SP.DisplayName -GraphApiRole $roles -Token $token.Token
 

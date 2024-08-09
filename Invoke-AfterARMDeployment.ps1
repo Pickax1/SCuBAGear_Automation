@@ -60,11 +60,6 @@ Try{
 
     `$FullOutput = GC C:\Test.txt
     return `$FullOutput
-
-    # Cleanup
-    sleep 5
-    Remove-Item C:\test.txt -Force
-
 }Catch{
     Write-Error -Message `$_.Exception
 }
@@ -239,7 +234,7 @@ New-AzAutomationHybridRunbookWorker @HybridWorkerParams
 Write-Output "Restarting Hybrid Worker Service on $($SCuBAVM.Name) Virtual Machine to jump start hybrid worker connection"
 # Add code to restart the service
 $Script = @"
-    Remove-Item C:\test.txt -Force
+    Remove-Item C:\test.txt -Force -Confirm:`$False
     Restart-Service -Name HybridWorkerService -Force    
 "@
 Invoke-AzVMRunCommand -ResourceGroupName $VMResourceGroup -VMName $VMName -CommandId 'RunPowerShellScript' -ScriptString $Script

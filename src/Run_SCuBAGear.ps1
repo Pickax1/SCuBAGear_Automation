@@ -24,7 +24,6 @@ Try{
        Import-Module -Name SCuBAGear -Force
 
        # This will check for depencies and latest versions
-       Set-Location C:\Users\SCuBA\
        Write-Output "Initializing SCuBAGear (This can take awhile)...."
        Initialize-SCuBA -ScubaParentDirectory C:\Users
 
@@ -60,11 +59,10 @@ Try{
        Import-Module SCuBAGear -Force
 
        # This will check for depencies and latest versions
-       Set-Location C:\Users\SCuBA\
+       Write-Output "Initializing SCuBAGear (This can take awhile)...."
        Write-Output "Initializing SCuBAGear (This can take awhile)...."
        Initialize-SCuBA -ScubaParentDirectory C:\Users
 
-       # Change directory to where the OPA executable was downloaded/located at
        Copy-Item -Path C:\Windows\System32\config\systemprofile\.scubagear\ -Destination C:\Users\ -Recurse -Force
        Set-Location C:\Users
        

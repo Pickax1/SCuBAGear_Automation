@@ -511,7 +511,7 @@
             "properties": {
                 "description" : "",
                 "runbookType": "PowerShell",
-                "logVerbose": true,
+                "logVerbose": false,
                 "logProgress": false,
                 "logActivityTrace": 0,
                 "publishContentLink": {

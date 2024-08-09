@@ -26,10 +26,10 @@ Try{
        # This will check for depencies and latest versions
        Set-Location C:\Users\SCuBA\
        Write-Output "Initializing SCuBAGear (This can take awhile)...."
-       Initialize-SCuBA
+       Initialize-SCuBA -ScubaParentDirectory C:\Users
 
-       # Change directory to where the OPA executable was downloaded/located at
-       Set-Location .\.scubagear\tools
+       Copy-Item -Path C:\Windows\System32\config\systemprofile\.scubagear\ -Destination C:\Users\ -Recurse -Force
+       Set-Location C:\Users
 
        # Define some variables for Graph connection
        $ClientID = Get-AutomationVariable -Name 'ClientID'
@@ -43,11 +43,7 @@ Try{
        If((Get-MgContext).AppName -eq 'SCuBAGearAutomation'){
            # Only review AAD and don't try to logon interactively to the portal
            Write-Output "Running SCuBAGear Checks...."
-           Invoke-ScuBA -ProductNames aad -LogIn $False
-
-           # Move generated folder and files to SCuBA users directory
-           Write-Output "Moving results to SCuBA directory...."
-           Copy-Item -Recurse -Path C:\Packages\Plugins\Microsoft.Azure.Automation.HybridWorker.HybridWorkerForWindows\*\HybridWorkerPackage\HybridWorkerAgent\M365BaselineConformance* -Destination C:\Users\SCuBA\
+           Invoke-ScuBA -ProductNames aad -OPAPath C:\Users\.scubagear\tools\ -OutPath C:\Users\ -LogIn $False
 
            # Disconnect from graph
            Set-PSRepository -Name 'PSGallery' -InstallationPolicy Untrusted
@@ -65,12 +61,13 @@ Try{
 
        # This will check for depencies and latest versions
        Set-Location C:\Users\SCuBA\
-       Write-Output "Initializing SCuBAGear...."
-       Initialize-SCuBA
+       Write-Output "Initializing SCuBAGear (This can take awhile)...."
+       Initialize-SCuBA -ScubaParentDirectory C:\Users
 
        # Change directory to where the OPA executable was downloaded/located at
-       Set-Location .\.scubagear\tools
-
+       Copy-Item -Path C:\Windows\System32\config\systemprofile\.scubagear\ -Destination C:\Users\ -Recurse -Force
+       Set-Location C:\Users
+       
        # Define some variables for Graph connection
        $ClientID = Get-AutomationVariable -Name 'ClientID'
        $TenantID = Get-AutomationVariable -Name 'TenantID'
@@ -82,11 +79,7 @@ Try{
        If((Get-MgContext).AppName -eq 'SCuBAGearAutomation'){
            # Only review AAD and don't try to logon interactively to the portal
            Write-Output "Running SCuBAGear Checks...."
-           Invoke-ScuBA -ProductNames aad -LogIn $False
-
-           # Move generated folder and files to SCuBA users directory
-           Write-Output "Moving results to SCuBA directory...."
-           Copy-Item -Recurse -Path C:\Packages\Plugins\Microsoft.Azure.Automation.HybridWorker.HybridWorkerForWindows\*\HybridWorkerPackage\HybridWorkerAgent\M365BaselineConformance* -Destination C:\Users\SCuBA\
+           Invoke-ScuBA -ProductNames aad -OPAPath C:\Users\.scubagear\tools\ -OutPath C:\Users\ -LogIn $False
 
            # Disconnect from graph
            Set-PSRepository -Name 'PSGallery' -InstallationPolicy Untrusted

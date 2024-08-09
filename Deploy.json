@@ -39,6 +39,7 @@
         "adminUsername": {
             "type": "string",
             "defaultValue": "SCuBA",
+            "maxLength": 20,
             "metadata": {
             "description": "Username for the Virtual Machine."
             }
@@ -169,18 +170,6 @@
 				"TenantID": {
 					"name": "TenantID",
 					"description": "Used for Microsoft Graph connection"
-				},
-                "StartDate": {
-					"name": "StartDate",
-					"description": "Extracted from certificate"
-				},
-                "EndDate": {
-					"name": "EndDate",
-					"description": "Extracted from certificate"
-				},
-                "KeyValue": {
-					"name": "KeyValue",
-					"description": "Extracted from certificate"
 				}
 			}
 		},
@@ -527,7 +516,7 @@
                 "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
             ],
             "properties": {
-                "isEncrypted": false,
+                "isEncrypted": true,
                 "value": "[concat('\"','update me','\"')]"
             }
         },
@@ -539,7 +528,7 @@
                 "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
             ],
             "properties": {
-                "isEncrypted": false,
+                "isEncrypted": true,
                 "value": "[concat('\"','update me','\"')]"
             }
         },
@@ -551,43 +540,7 @@
                 "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
             ],
             "properties": {
-                "isEncrypted": false,
-                "value": "[concat('\"','update me','\"')]"
-            }
-        },
-        {
-            "type": "Microsoft.Automation/automationAccounts/variables",
-            "apiVersion": "2023-11-01",
-            "name": "[concat(parameters('AutomationAccountName'), '/StartDate')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
-            ],
-            "properties": {
-                "isEncrypted": false,
-                "value": "[concat('\"','update me','\"')]"
-            }
-        },
-        {
-            "type": "Microsoft.Automation/automationAccounts/variables",
-            "apiVersion": "2023-11-01",
-            "name": "[concat(parameters('AutomationAccountName'), '/EndDate')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
-            ],
-            "properties": {
-                "isEncrypted": false,
-                "value": "[concat('\"','update me','\"')]"
-            }
-        },
-        {
-            "type": "Microsoft.Automation/automationAccounts/variables",
-            "apiVersion": "2023-11-01",
-            "name": "[concat(parameters('AutomationAccountName'), '/KeyValue')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
-            ],
-            "properties": {
-                "isEncrypted": false,
+                "isEncrypted": true,
                 "value": "[concat('\"','update me','\"')]"
             }
         }

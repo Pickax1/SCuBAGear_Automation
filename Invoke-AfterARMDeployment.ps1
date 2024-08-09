@@ -23,7 +23,7 @@ $RGs
 $RG = Read-Host "Enter your Resource Group Name that you deployed the ARM template to, if unknown review the list from above:"
 
 Write-Output "Retrieving information on SCuBA VM"
-$SCuBAVM = Get-AzVM -Name SCuBA -ResourceGroupName $RG
+$SCuBAVM = (Get-AzVM -ResourceGroupName $RG).Name
 $VMResourceGroup = $SCuBAVM.Id.Split('/')[4]
 $VmId = $SCuBAVM.Id
 $VM_ID = $SCuBAVM.VmId
@@ -63,7 +63,7 @@ Try{
 
     # Cleanup
     sleep 5
-    Remove-Item C:\test.txt -Force -Confirm:`$False
+    Remove-Item C:\test.txt -Force
 
 }Catch{
     Write-Error -Message `$_.Exception
@@ -101,9 +101,9 @@ $ServicePrincipalID = $SP.ID
 
 # Update Variables used to connect to Microsoft Graph when running SCuBAGear
 Write-Output "Updating Variables on $($AutoAccountName) Automation Account, these are used to connect to Microsoft Graph when running SCuBAGear on $($VMName) VM"
-Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'ClientID' -Value ($SP).AppID -Encrypted $False
-Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'TenantID' -Value ($SP).AppOwnerOrganizationID -Encrypted $False
-Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'CertThumbprint' -Value $Thumbprint -Encrypted $False
+Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'ClientID' -Value ($SP).AppID -Encrypted $True
+Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'TenantID' -Value ($SP).AppOwnerOrganizationID -Encrypted $True
+Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'CertThumbprint' -Value $Thumbprint -Encrypted $True
 
 # Assign appropriate graph permissions to the service principal and add to global readers
 function Add-GraphApiRoleToSP {
@@ -239,7 +239,8 @@ New-AzAutomationHybridRunbookWorker @HybridWorkerParams
 Write-Output "Restarting Hybrid Worker Service on $($SCuBAVM.Name) Virtual Machine to jump start hybrid worker connection"
 # Add code to restart the service
 $Script = @"
-    Restart-Service -Name HybridWorkerService -Force
+    Remove-Item C:\test.txt -Force
+    Restart-Service -Name HybridWorkerService -Force    
 "@
 Invoke-AzVMRunCommand -ResourceGroupName $VMResourceGroup -VMName $VMName -CommandId 'RunPowerShellScript' -ScriptString $Script
 

@@ -23,7 +23,7 @@ $RGs
 $RG = Read-Host "Enter your Resource Group Name that you deployed the ARM template to, if unknown review the list from above:"
 
 Write-Output "Retrieving information on SCuBA VM"
-$SCuBAVM = (Get-AzVM -ResourceGroupName $RG).Name
+$SCuBAVM = Get-AzVM -ResourceGroupName $RG
 $VMResourceGroup = $SCuBAVM.Id.Split('/')[4]
 $VmId = $SCuBAVM.Id
 $VM_ID = $SCuBAVM.VmId

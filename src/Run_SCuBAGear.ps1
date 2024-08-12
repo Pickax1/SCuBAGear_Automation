@@ -33,6 +33,15 @@ Try{
 }Catch{
     Write-Error -Message $_.Exception
 }
+
+# Define some variables for Graph connection and writing to the storage account
+$ClientID = Get-AutomationVariable -Name 'ClientID'
+$TenantID = Get-AutomationVariable -Name 'TenantID'
+$CertificateThumbprint = Get-AutomationVariable -Name 'CertThumbprint'
+$StorageAccountName = Get-AutomationVariable -Name 'StorageAccountName'
+$Date= Get-Date -Format FileDateTime
+$ContainerName = "scuba-$TenantID-$Date".ToLower()
+
 function Invoke-StorageTransfer {
     Try{
         Connect-Azaccount -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID
@@ -72,14 +81,6 @@ Try{
        Copy-Item -Path C:\Windows\System32\config\systemprofile\.scubagear\ -Destination C:\Users\ -Recurse -Force
        Set-Location C:\Users
 
-       # Define some variables for Graph connection and writing to the storage account
-       $ClientID = Get-AutomationVariable -Name 'ClientID'
-       $TenantID = Get-AutomationVariable -Name 'TenantID'
-       $CertificateThumbprint = Get-AutomationVariable -Name 'CertThumbprint'
-       $StorageAccountName = Get-AutomationVariable -Name 'StorageAccountName'
-       $Date= Get-Date -Format FileDateTime
-       $ContainerName = "scuba-$TenantID-$Date".ToLower()
-
        # Connect to Graph using the service principal and certficate thumbprint
        Write-Output "Connecting to MGGraph...."
        Connect-MgGraph -CertificateThumbprint $CertificateThumbprint -ClientID $ClientID -TenantID $TenantID
@@ -112,11 +113,6 @@ Try{
        Copy-Item -Path C:\Windows\System32\config\systemprofile\.scubagear\ -Destination C:\Users\ -Recurse -Force
        Set-Location C:\Users
        
-       # Define some variables for Graph connection
-       $ClientID = Get-AutomationVariable -Name 'ClientID'
-       $TenantID = Get-AutomationVariable -Name 'TenantID'
-       $CertificateThumbprint = Get-AutomationVariable -Name 'CertThumbprint'
-
        # Connect to Graph using the service principal and certficate thumbprint
        Connect-MgGraph -CertificateThumbprint $CertificateThumbprint -ClientID $ClientID -TenantID $TenantID
 

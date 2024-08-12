@@ -17,6 +17,22 @@ Try{
 }Catch{
    Write-Error -Message $_.Exception
 }
+
+Try{
+    if((Get-Module az,az.storage).Count -eq '2')
+    {
+        Write-Output "Importing Az and Az.Storage Modules...."
+        Import-Module -Name az,az.storage -Force -WarningAction SilentlyContinue
+    }else{
+        # Install and import SCuBAGear module if not already installed and loaded
+        Write-Output "Installing Az and Az.Storage Modules...."
+        Install-Module az,az.storage -Force -Confirm:$False -WarningAction SilentlyContinue
+        Write-Output "Importing Az and Az.Storage Modules...."
+        Import-Module az,az.storage -Force -WarningAction SilentlyContinue
+    }
+}Catch{
+    Write-Error -Message $_.Exception
+}
 function Invoke-StorageTransfer {
     Try{
         Connect-Azaccount -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID

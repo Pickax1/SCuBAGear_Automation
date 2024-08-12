@@ -30,6 +30,8 @@ $VM_ID = $SCuBAVM.VmId
 $VMName = $SCuBAVM.Name
 $AutoAccountName = (Get-AzAutomationAccount -ResourceGroupName $RG).AutomationAccountName
 $SubscriptionID = (Get-AzSubscription).ID
+#Identify Storage Account Name
+$SA = (Get-AzStorageAccount -ResourceGroupName $RG).StorageAccountName
 
 ########################################
 # Step 1 - Create the certificate on VM
@@ -89,9 +91,10 @@ $ServicePrincipalID = $SP.ID
 
 # Update Variables used to connect to Microsoft Graph when running SCuBAGear
 Write-Output "Updating Variables on $($AutoAccountName) Automation Account, these are used to connect to Microsoft Graph when running SCuBAGear on $($VMName) VM"
-Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'ClientID' -Value ($SP).AppID -Encrypted $False
-Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'TenantID' -Value ($SP).AppOwnerOrganizationID -Encrypted $False
-Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'CertThumbprint' -Value $Thumbprint -Encrypted $False
+Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'ClientID' -Value ($SP).AppID -Encrypted $True
+Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'TenantID' -Value ($SP).AppOwnerOrganizationID -Encrypted $True
+Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'CertThumbprint' -Value $Thumbprint -Encrypted $True
+Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'StorageAccountName' -Value $SA -Encrypted $True
 
 # Assign appropriate graph permissions to the service principal and add to global readers
 function Add-GraphApiRoleToSP {
@@ -190,6 +193,13 @@ $roles = @("Global Reader")
 foreach ($role in $roles) {
     $roleDefinition = Get-MgRoleManagementDirectoryRoleDefinition -Filter "displayName eq '$role'"
     New-MgRoleManagementDirectoryRoleAssignment -PrincipalId $servicePrincipalId -RoleDefinitionId $roleDefinition.Id -DirectoryScopeId "/"
+}
+
+$Scope = (Get-AzStorageAccount -ResourceGroupName $RG -Name $SA).id
+$AZRoles = "Storage Account Contributor", "Storage Blob Data Contributor"
+
+foreach ($AZRole in $AZRoles){
+    New-AzRoleAssignment -ApplicationId $sp.AppId -RoleDefinitionName $AZRole -Scope $Scope
 }
 
 ################################################

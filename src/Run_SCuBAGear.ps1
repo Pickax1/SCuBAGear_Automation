@@ -17,6 +17,32 @@ Try{
 }Catch{
    Write-Error -Message $_.Exception
 }
+function Invoke-StorageTransfer {
+    Try{
+        Connect-Azaccount -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID
+        Write-Output "Service Principal Connected to Azure for writing result to Storage Account"
+        $Report = (Get-ChildItem -Path "C:\Users\" | Sort-Object -Descending -Property LastWriteTime | select-object -First 1)
+        Write-Output "Retrieved Name of SCuBA Directory"
+        $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
+        Write-Output "Preparing for Connecting to Storage Account"
+        Try{
+            New-AzStorageContainer -Name $ContainerName -Context $ctx
+            Write-Output "Azure Blob Container Created"
+        }Catch{
+            Write-Output"Azure Blob Container Exists"
+        }
+        
+        Try{
+            Get-ChildItem -Path "C:\Users\$Report" -Recurse | Set-AzStorageBlobContent -Container $ContainerName -Context $ctx -WarningAction SilentlyContinue
+            Write-Output "Report Uploaded to Azure Blob Storage"
+        }catch{
+            Write-Output "Unable to Upload Report to Blob Storage"
+        }
+    }Catch{
+        Write-Error -Message $_.Exception
+        Write-Output "Storage Messed Up"
+    }
+}
 
 Try{
    if((Get-Module -ListAvailable 'SCuBAGear')){
@@ -30,10 +56,13 @@ Try{
        Copy-Item -Path C:\Windows\System32\config\systemprofile\.scubagear\ -Destination C:\Users\ -Recurse -Force
        Set-Location C:\Users
 
-       # Define some variables for Graph connection
+       # Define some variables for Graph connection and writing to the storage account
        $ClientID = Get-AutomationVariable -Name 'ClientID'
        $TenantID = Get-AutomationVariable -Name 'TenantID'
        $CertificateThumbprint = Get-AutomationVariable -Name 'CertThumbprint'
+       $StorageAccountName = Get-AutomationVariable -Name 'StorageAccountName'
+       $Date= Get-Date -Format FileDateTime
+       $ContainerName = "scuba-$TenantID-$Date".ToLower()
 
        # Connect to Graph using the service principal and certficate thumbprint
        Write-Output "Connecting to MGGraph...."
@@ -48,6 +77,7 @@ Try{
            Set-PSRepository -Name 'PSGallery' -InstallationPolicy Untrusted
            Disconnect-MgGraph
 
+           Invoke-StorageTransfer
        }else{
            Write-Error "Graph Context is wrong....(Get-MgContext).AppName"
        }
@@ -83,6 +113,7 @@ Try{
            Set-PSRepository -Name 'PSGallery' -InstallationPolicy Untrusted
            Disconnect-MgGraph
 
+           Invoke-StorageTransfer
        }else{
            Write-Error "Graph Context is wrong....(Get-MgContext).AppName"
        }

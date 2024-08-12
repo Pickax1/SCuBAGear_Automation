@@ -23,7 +23,7 @@ $RGs
 $RG = Read-Host "Enter your Resource Group Name that you deployed the ARM template to, if unknown review the list from above:"
 
 Write-Output "Retrieving information on SCuBA VM"
-$SCuBAVM = Get-AzVM -ResourceGroupName $RG
+$SCuBAVM = Get-AzVM -Name SCuBA -ResourceGroupName $RG
 $VMResourceGroup = $SCuBAVM.Id.Split('/')[4]
 $VmId = $SCuBAVM.Id
 $VM_ID = $SCuBAVM.VmId
@@ -38,35 +38,28 @@ $SubscriptionID = (Get-AzSubscription).ID
 # Script to create Self-Signed Certificate
 $Script = @"
 Try{
-
     `$SCuBACertParams = @{
         CertStoreLocation = "cert:\LocalMachine\My" # Needed since runbook runs as SYSTEM
-        Subject = "CN=SCuBAAutomationCert"
+        Subject = "CN=SCuBAAutomationCert1"
         NotAfter = (Get-Date).AddYears(1) # Cert will expire 1 year after issued
     }
-
-    # Create the Self-Signed Certificate and store with the LocalComputer store
     `$cert = New-SelfSignedCertificate @SCuBACertParams
-    `$Thumbprint = (`$Cert).Thumbprint
-    `$keyValue = [System.Convert]::ToBase64String(`$cert.GetRawCertData())
-    `$StartDate = (`$Cert).NotBefore
-    `$EndDate = (`$Cert).NotAfter
 
-    # Test
-    echo "Thumbprint: `$Thumbprint" >> C:\test.txt
-    echo "KeyValue: `$KeyValue" >> C:\test.txt
-    echo "StartDate: `$StartDate" >> C:\test.txt
-    echo "EndDate: `$EndDate" >> C:\test.txt
+    `$base64Cert = [System.Convert]::ToBase64String(`$cert.GetRawCertData())
 
-    `$FullOutput = GC C:\Test.txt
-    return `$FullOutput
+    `$KeyValueArray = [System.Collections.ArrayList]@()
+    `$KeyValueArray.Add(`$base64Cert)
+
+    Write-Output "Thumbprint: `$(`$cert.Thumbprint)"
+    Write-Output "StartDate: `$(`$cert.NotBefore)"
+    Write-Output "EndDate: `$(`$cert.NotAfter)"
+    Write-Output "KeyValue: `$KeyValueArray"
 }Catch{
-    Write-Error -Message `$_.Exception
+    Write-Error -Message `$_.Exception    
 }
 "@
-# Run the script on the SCuBA VM
-Write-Output "Creating Self-Signed Certificate on: $($VMName)"
-$Result = Invoke-AzVMRunCommand -ResourceGroupName $VMResourceGroup -VMName $VMName -CommandId 'RunPowerShellScript' -ScriptString $Script
+
+$result = Invoke-AzVMRunCommand -ResourceGroupName $VMResourceGroup -Name $VMName -CommandId "RunPowerShellScript" -ScriptString $script
 
 # Extract the output from the result variable, this will be used when creating the Service Principal
 $outputstrings = $result.Value[0].Message -split "`n"
@@ -96,9 +89,9 @@ $ServicePrincipalID = $SP.ID
 
 # Update Variables used to connect to Microsoft Graph when running SCuBAGear
 Write-Output "Updating Variables on $($AutoAccountName) Automation Account, these are used to connect to Microsoft Graph when running SCuBAGear on $($VMName) VM"
-Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'ClientID' -Value ($SP).AppID -Encrypted $True
-Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'TenantID' -Value ($SP).AppOwnerOrganizationID -Encrypted $True
-Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'CertThumbprint' -Value $Thumbprint -Encrypted $True
+Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'ClientID' -Value ($SP).AppID -Encrypted $False
+Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'TenantID' -Value ($SP).AppOwnerOrganizationID -Encrypted $False
+Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'CertThumbprint' -Value $Thumbprint -Encrypted $False
 
 # Assign appropriate graph permissions to the service principal and add to global readers
 function Add-GraphApiRoleToSP {
@@ -214,7 +207,7 @@ $Settings = @{
 }
 
 # Install the Hybrid Worker extension
-Write-Output "Installing Hybrid Worker Extension on $($VmName) VM, this will take 1-2 minutes"
+Write-Output "Installing Hybrid Worker Extension on $($VmName) VM, this will take 2-3 minutes"
 Set-AzVMExtension -ResourceGroupName $RG -VMName $vmName -Location $VMlocation `
     -Name "HybridWorkerExtension" -Publisher "Microsoft.Azure.Automation.HybridWorker" `
     -ExtensionType "HybridWorkerForWindows" -TypeHandlerVersion "1.1" -Settings $Settings `
@@ -234,8 +227,7 @@ New-AzAutomationHybridRunbookWorker @HybridWorkerParams
 Write-Output "Restarting Hybrid Worker Service on $($SCuBAVM.Name) Virtual Machine to jump start hybrid worker connection"
 # Add code to restart the service
 $Script = @"
-    Remove-Item C:\test.txt -Force -Confirm:`$False
-    Restart-Service -Name HybridWorkerService -Force    
+    Restart-Service -Name HybridWorkerService -Force
 "@
 Invoke-AzVMRunCommand -ResourceGroupName $VMResourceGroup -VMName $VMName -CommandId 'RunPowerShellScript' -ScriptString $Script
 

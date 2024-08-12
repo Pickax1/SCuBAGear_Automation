@@ -543,6 +543,18 @@
                 "isEncrypted": true,
                 "value": "[concat('\"','update me','\"')]"
             }
+        },
+	    {
+            "type": "Microsoft.Automation/automationAccounts/variables",
+            "apiVersion": "2023-11-01",
+            "name": "[concat(parameters('AutomationAccountName'), '/StorageAccountName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
+            ],
+            "properties": {
+                "isEncrypted": true,
+                "value": "[concat('\"','update me','\"')]"
+            }
         }
 	]
 }

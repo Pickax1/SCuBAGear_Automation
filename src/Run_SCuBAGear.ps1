@@ -1,4 +1,17 @@
 Try{
+    if((Get-PackageProvider -Name 'NuGet')){
+        # NuGet is installed
+        Write-Output "NuGet provider is installed...."
+    }Else{
+        # NuGet wasn't installed, installing now
+        Write-Output "Installing NuGet provider...."
+        Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Confirm:$False
+    }
+ }Catch{
+    Write-Error -Message $_.Exception
+ }
+
+Try{
     if((Get-Module -ListAvailable az.accounts,az.storage).Count -eq '2')
     {
         Write-Output "Importing Az.Accounts and Az.Storage Modules...."
@@ -41,7 +54,7 @@ function Invoke-StorageTransfer {
             Write-Output "The below items have been Uploaded to Azure Blob Storage"
 
             ForEach($Item in $Items){
-                Write-Output "  - $($Item.Name)" -ForegroundColor Green
+                Write-Host"  - $($Item.Name)" -ForegroundColor Green
             }
         }catch{
             Write-Output "Unable to Upload Report to Blob Storage"

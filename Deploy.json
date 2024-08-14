@@ -154,9 +154,15 @@
         "resourcegroupname": {
             "type": "string",
             "defaultValue": "SCuBA_Automation"
-        }
-    },
-    "variables": {
+        },
+        "resourceTags": {
+        "type": "object",
+        "defaultValue": {
+          "Project": "SCuBAGear_Automation"
+      }
+    }
+  },
+   "variables": {
 		"assets": {
 			"aaVariables": {
 				"CertThumbprint": {
@@ -403,6 +409,7 @@
             "apiVersion": "2022-03-01",
             "name": "[parameters('vmName')]",
             "location": "[parameters('location')]",
+            "tags": "[parameters('resourceTags')]",
             "identity": {
                 "type": "SystemAssigned"
             },
@@ -544,22 +551,10 @@
                 "value": "[concat('\"','update me','\"')]"
             }
         },
-	{
+        {
             "type": "Microsoft.Automation/automationAccounts/variables",
             "apiVersion": "2023-11-01",
             "name": "[concat(parameters('AutomationAccountName'), '/StorageAccountName')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
-            ],
-            "properties": {
-                "isEncrypted": true,
-                "value": "[concat('\"','update me','\"')]"
-            }
-        },
-	    {
-            "type": "Microsoft.Automation/automationAccounts/variables",
-            "apiVersion": "2023-11-01",
-            "name": "[concat(parameters('AutomationAccountName'), '/Org')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
             ],

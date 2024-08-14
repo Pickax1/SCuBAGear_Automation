@@ -39,12 +39,12 @@ $ContainerName = "scuba-$TenantID-$Date".ToLower()
 function Invoke-StorageTransfer {
     Try{
         Write-Output "Service Principal Connected to Azure for writing result to Storage Account"
-        $Report = (Get-ChildItem -Path "C:\Users\" | Sort-Object -Descending -Property LastWriteTime | select-object -First 1).Name
+        $Report = (Get-ChildItem -Path "C:\Users\" -Filter "M365Baseline*" | Sort-Object -Descending -Property LastWriteTime | select-object -First 1).Name
         $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
         
         Try{
             $StorageContainer = New-AzStorageContainer -Name $ContainerName -Context $ctx
-            Write-Output "New Azure Blob Container Created for SCuBAGear Results - $StorageContainer"
+            Write-Output "New Azure Blob Container Created for SCuBAGear Results - $ContainerName"
         }Catch{
             Write-Output"Azure Blob Container Exists"
         }
@@ -53,8 +53,8 @@ function Invoke-StorageTransfer {
             $Items = Get-ChildItem -Path "C:\Users\$Report" -Recurse | Set-AzStorageBlobContent -Container $ContainerName -Context $ctx -WarningAction SilentlyContinue
             Write-Output "The below items have been Uploaded to Azure Blob Storage"
 
-            ForEach($Item in $Items){
-                Write-Host"  - $($Item.Name)" -ForegroundColor Green
+            ForEach($Item in $Items.Name){
+                Write-Output "  - $($Item)"
             }
         }catch{
             Write-Output "Unable to Upload Report to Blob Storage"
@@ -85,7 +85,7 @@ Try{
        If((Get-MgContext).AppName -eq 'SCuBAGearAutomation'){
            # Only review AAD and don't try to logon interactively to the portal
            
-           $Products = @("aad","teams","exo")
+           $Products = @("aad","teams")
 
            Try{
                if($Products -Contains "teams"){
@@ -139,7 +139,7 @@ Try{
 
         If((Get-MgContext).AppName -eq 'SCuBAGearAutomation'){
         
-            $Products = @("aad","teams","exo")
+            $Products = @("aad","teams")
 
             Try{
                 if($Products -Contains "teams"){

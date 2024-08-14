@@ -36,7 +36,14 @@ $VMName = $SCuBAVM.Name
 $AutoAccountName = (Get-AzAutomationAccount -ResourceGroupName $RG).AutomationAccountName
 $SubscriptionID = (Get-AzSubscription).ID
 $Org = (Get-AzTenant).DefaultDomain
-$SA = (Get-AzStorageAccount -ResourceGroupName $RG).StorageAccountName
+if(Get-Module -ListAvailable Az.Storage){
+    Import-Module Az.Storage
+    $SA = (Get-AzStorageAccount -ResourceGroupName $RG).StorageAccountName
+}Else{
+    Install-Module Az.Storage -Confirm:$False
+    Import-Module Az.Storage
+    $SA = (Get-AzStorageAccount -ResourceGroupName $RG).StorageAccountName
+}
 
 ########################################
 # Step 2 - Create the certificate on VM
@@ -47,7 +54,7 @@ $Script = @"
 Try{
     `$SCuBACertParams = @{
         CertStoreLocation = "cert:\LocalMachine\My" # Needed since runbook runs as SYSTEM
-        Subject = "CN=SCuBAAutomationCert1"
+        Subject = "CN=SCuBAAutomationCert"
         NotAfter = (Get-Date).AddYears(1) # Cert will expire 1 year after issued
     }
     `$cert = New-SelfSignedCertificate @SCuBACertParams
@@ -241,8 +248,8 @@ Try{
 }
 
 # Add SCuBA to the Hybrid Worker Group
-Write-Output "  Adding $($VMName) Virtual Machine to be a member of the $($HybridGroupName)"
 $HybridGroupName = (Get-AzAutomationHybridWorkerGroup -ResourceGroupName $RG -AutomationAccountName $AutoAccountName).Name
+Write-Output "  Adding $($VMName) Virtual Machine to be a member of the $($HybridGroupName)"
 $HybridWorkerParams = @{
     Name = $VM_ID
     AutomationAccountName = $AutoAccountName

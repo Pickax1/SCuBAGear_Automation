@@ -28,7 +28,8 @@ Get-AzResourceGroup | Select-Object ResourceGroupName, Location | Out-Host
 $RG = Read-Host "   Enter your Resource Group Name that you deployed the ARM template to, if unknown review the list from above:"
 
 Write-Output "  Creating Variables for later use"
-$SCuBAVM = Get-AzVM -Name SCuBA -ResourceGroupName $RG
+$VMTag = (Get-AzResource -Tag @{ "Project"="SCuBAGear_Automation"} -ResourceType 'Microsoft.Compute/VirtualMachines').Name
+$SCuBAVM = Get-AzVM -Name $VMTag -ResourceGroupName $RG
 $VMResourceGroup = $SCuBAVM.Id.Split('/')[4]
 $VmId = $SCuBAVM.Id
 $VM_ID = $SCuBAVM.VmId
@@ -219,6 +220,19 @@ foreach ($AZRole in $AZRoles){
 # Step 4 - Add the VM to the Hybrid Worker Group
 ################################################
 Write-Host "Step 4: Adding Hybrid Worker Extension on $($VMName) Virtual Machine  `r`n" -ForegroundColor Yellow
+
+# Add SCuBA to the Hybrid Worker Group
+$HybridGroupName = (Get-AzAutomationHybridWorkerGroup -ResourceGroupName $RG -AutomationAccountName $AutoAccountName).Name
+Write-Output "  Adding $($VMName) Virtual Machine to be a member of the $($HybridGroupName)"
+$HybridWorkerParams = @{
+    Name = $VM_ID
+    AutomationAccountName = $AutoAccountName
+    HybridRunbookWorkerGroupName = $HybridGroupName
+    VmResourceId = $VmId
+    ResourceGroupName = $VMResourceGroup
+}
+New-AzAutomationHybridRunbookWorker @HybridWorkerParams
+
 # Install hybrid worker extension on VM
 $VMLocation = $SCuBAVM.Location
 
@@ -246,18 +260,6 @@ Try{
 }Catch{
     Write-Error $_.Exception
 }
-
-# Add SCuBA to the Hybrid Worker Group
-$HybridGroupName = (Get-AzAutomationHybridWorkerGroup -ResourceGroupName $RG -AutomationAccountName $AutoAccountName).Name
-Write-Output "  Adding $($VMName) Virtual Machine to be a member of the $($HybridGroupName)"
-$HybridWorkerParams = @{
-    Name = $VM_ID
-    AutomationAccountName = $AutoAccountName
-    HybridRunbookWorkerGroupName = $HybridGroupName
-    VmResourceId = $VmId
-    ResourceGroupName = $VMResourceGroup
-}
-New-AzAutomationHybridRunbookWorker @HybridWorkerParams
 
 Write-Output "  Restarting Hybrid Worker Service on $($SCuBAVM.Name) Virtual Machine to jump start hybrid worker connection"
 # Add code to restart the service

@@ -110,76 +110,9 @@ Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupN
 Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'StorageAccountName' -Value $SA -Encrypted $True | Out-Null
 Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'Org' -Value $Org -Encrypted $True | Out-Null
 
-# Assign appropriate graph permissions to the service principal and add to global readers
-function Add-GraphApiRoleToSP {
-    [cmdletbinding()]
-    param (
-        [parameter(Mandatory = $true)]
-        [string]$ApplicationName,
-
-        [parameter(Mandatory = $true)]
-        [string[]]$GraphApiRole,
-
-        [parameter(mandatory = $true)]
-        [string]$Token
-    )
-
-    $baseUri = 'https://graph.microsoft.com/v1.0/servicePrincipals'
-    $graphAppId = '00000003-0000-0000-c000-000000000000'
-    $spSearchFiler = '"displayName:{0}" OR "appId:{1}"' -f $ApplicationName, $graphAppId
-
-    try {
-        $msiParams = @{
-            Method  = 'Get'
-            Headers = @{Authorization = "Bearer $Token"; ConsistencyLevel = "eventual" }
-        }
-        $msiParams.Uri = '{0}?$search={1}' -f $baseUri, $spSearchFiler
-        $spList = (Invoke-RestMethod @msiParams).Value
-        $msiId = ($spList | Where-Object { $_.displayName -eq $ApplicationName }).Id
-        $graphId = ($spList | Where-Object { $_.appId -eq $graphAppId }).Id
-        $msiParams.Uri = "$($baseUri)/$($msiId)?`$expand=appRoleAssignments"
-        $msiItem = Invoke-RestMethod @msiParams
-
-        $msiParams.Uri = "$baseUri/$($graphId)/appRoles"
-        $graphRoles = (Invoke-RestMethod @msiParams).Value | 
-        Where-Object { $_.value -in $GraphApiRole -and $_.allowedMemberTypes -Contains "Application" } |
-        Select-Object allowedMemberTypes, id, value
-
-        foreach ($roleItem in $graphRoles) {
-            if ($roleItem.id -notIn $msiItem.appRoleAssignments.appRoleId) {
-                Write-Host "    Adding role ($($roleItem.value)) to identity: $($ApplicationName).." -ForegroundColor Green
-                $postBody = @{
-                    "principalId" = $msiId
-                    "resourceId"  = $graphId
-                    "appRoleId"   = $roleItem.id
-                }
-                $postParams = @{
-                    Method      = 'Post'
-                    Uri         = "$baseUri/$graphId/appRoleAssignedTo"
-                    Body        = $postBody | ConvertTo-Json
-                    Headers     = $msiParams.Headers
-                    ContentType = 'Application/Json'
-                }
-                $result = Invoke-RestMethod @postParams
-                if ( $PSBoundParameters['Verbose'] -or $VerbosePreference -eq 'Continue' ) {
-                    $result
-                }
-            }
-            else {
-                Write-Host "role ($($roleItem.value)) already found in $($ApplicationName).." -ForegroundColor Yellow
-            }
-        }
-        
-    }
-    catch {
-        Write-Warning $_.Exception.Message
-    }
-}
-#endregion
-
 # Non-Interactive Permission Requirements - https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md
 $roles = @(
-    "Directory.Read.All", #Entra ID
+    "Directory.Read.All", #Entra ID and SharePoint
     "GroupMember.Read.All", #Entra ID
     "Organization.Read.All", #Entra ID
     "Policy.Read.All", #Entra ID
@@ -188,15 +121,20 @@ $roles = @(
     "PrivilegedEligibilitySchedule.Read.AzureADGroup", #Entra ID
     "PrivilegedAccess.Read.AzureADGroup", #Entra ID
     "RoleManagementPolicy.Read.AzureADGroup", #Entra ID
-    "Sites.FullControl.All" # SharePoint
+    "Sites.FullControl.All", # SharePoint
+    "Exchange.ManageAsApp" # Defender and Exchange
 )
 
-# Connect MgGraph
-Write-Output "  Connecting to Microsoft Graph to add Service Principal $($SP.DisplayName) to $($Roles)"
-Connect-MgGraph -Scopes EntitlementManagement.Read.All,EntitlementManagement.ReadWrite.All -NoWelcome
-$token = Get-AzAccessToken -ResourceUrl "https://graph.microsoft.com"
+# Assign API permissions to Service Principal
+Write-Output "  Connecting to Microsoft Graph to assign $($Roles.count) API permissions to $($SP.DisplayName) Service Principal"
+Connect-MgGraph -Scopes Application.Read.All, AppRoleAssignment.ReadWrite.All, RoleManagement.ReadWrite.Directory
+$getGPerms = (Get-MgServicePrincipal -Filter "AppId eq '00000003-0000-0000-c000-000000000000'").approles | Where-Object{$_.Value -in $Roles}
+$GraphID = (Get-MgServicePrincipal -Filter "AppId eq '00000003-0000-0000-c000-000000000000'").id
 
-Add-GraphApiRoleToSP -ApplicationName $SP.DisplayName -GraphApiRole $roles -Token $token.Token
+# Assign roles for Graph
+foreach ($perm in $getGPerms){
+    New-MgServicePrincipalAppRoleAssignment -ServicePrincipalId $ServicePrincipalID -PrincipalId $ServicePrincipalID -ResourceId $GraphID -AppRoleId $perm.id
+}
 
 # Add Service Principal to the appropriate groups
 # https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#service-principal

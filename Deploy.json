@@ -184,7 +184,7 @@
 				"name": "scuba_runbook",
 				"url": "[uri(parameters('_artifactsLocation'), 'src/Run_SCuBAGear.ps1')]",
 				"version": "1.0.0.0",
-				"type": "PowerShell",
+				"type": "PowerShell72",
 				"description": "Run ScubaGear"
 			}],
             "modules": [{
@@ -506,7 +506,7 @@
             ],
             "properties": {
                 "description" : "",
-                "runbookType": "PowerShell",
+                "runbookType": "PowerShell72",
                 "logVerbose": false,
                 "logProgress": false,
                 "logActivityTrace": 0,

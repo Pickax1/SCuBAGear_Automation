@@ -22,9 +22,9 @@
     - Installs PowerShell 7 on the VM
 
 ### Step 3: Navigate to the Automation Account in Azure
-- Select **Runbooks** under **Process Automation**
+- Under **Process Automation** select **Runbooks**
   - Select the `Run_SCuBAGear` runbook and press **Start**
-  - Ensure you select **Run on the Hybrid Worker**
+  - For run settings, ensure you select **Run on the Hybrid Worker**
 - Review the output screen for updates
 
 ### Step 4: Verify Files are Saved Within the Storage Container

@@ -24,8 +24,14 @@
 ### Step 3: Navigate to the Automation Account in Azure
 - Under **Process Automation** select **Runbooks**
   - Select the `Run_SCuBAGear` runbook and press **Start**
+    - This will run the baselines for (aad, teams, exo, and defender)
+    - This runbook runs under PowerShell 7.2 context
   - For run settings, ensure you select **Run on the Hybrid Worker**
 - Review the output screen for updates
+
+- Repeat the above steps for `Run_SharePoint` runbook
+    -   This will run the SharePoint baseline
+    -   This runbook runs under PowerShell 5.1 context  
 
 ### Step 4: Verify Files are Saved Within the Storage Container
 

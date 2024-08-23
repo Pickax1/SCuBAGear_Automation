@@ -515,6 +515,25 @@
 				}
             }
         },
+	    {
+            "type": "Microsoft.Automation/automationAccounts/runbooks",
+            "apiVersion": "2023-11-01",
+            "name": "[concat(parameters('AutomationAccountName'), '/Run_SharePoint')]",
+            "location": "[parameters('automationRegion')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Automation/automationAccounts', parameters('AutomationAccountName'))]"
+            ],
+            "properties": {
+                "description" : "",
+                "runbookType": "PowerShell",
+                "logVerbose": false,
+                "logProgress": false,
+                "logActivityTrace": 0,
+                "publishContentLink": {
+					"uri": "https://raw.githubusercontent.com/Pickax1/SCuBAGear_Automation/main/src/Run_SharePoint.ps1"
+				}
+            }
+        },
         {
             "type": "Microsoft.Automation/automationAccounts/variables",
             "apiVersion": "2023-11-01",

@@ -37,4 +37,4 @@
 
 ---
 
-> **NOTE:** You only need to run Steps 1-2 once. These steps must be performed by someone with the correct permissions to create and provision resources within your tenant.
+> **NOTE:** You only need to run **Steps 1-2 once**. These steps must be performed by someone with the correct permissions to create and provision resources within your tenant.

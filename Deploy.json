@@ -19,7 +19,7 @@
 		"automationRegion": {
 			"type": "string",
 			"allowedValues": [
-				"eastus2"
+				"eastus2",
         "westus"
 			],
 			"metadata": {

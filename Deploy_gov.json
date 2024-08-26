@@ -19,8 +19,10 @@
 		"automationRegion": {
 			"type": "string",
 			"allowedValues": [
-				"eastus2"
-        "westus"
+				"westcentralus",
+				"usgovvirginia",
+				"usgovtexas",
+				"usgovarizona"
 			],
 			"metadata": {
 				"description": "Specify the region for your automation account"

@@ -1,4 +1,18 @@
 <#
+    .SYNOPSIS  
+    This script is used to automate the deployment of SCuBAGear on a Virtual Machine (VM) in Azure.
+
+    .DESCRIPTION
+    This script will automate the deployment of SCuBAGear on a Virtual Machine (VM) in Azure. The script will create a self-signed certificate on the VM, create a service principal, assign the service principal with the correct permissions in order to run SCuBAGear, add the hybrid worker extension on the VM, and associate the service principal with Power Platform.
+
+    .PARAMETER Environment
+    The environment to deploy SCuBAGear to, the default is commercial. The options are commercial, gcc, gcchigh, and dod.
+
+    .EXAMPLE
+    Invoke-AfterARMDeployment.ps1 -Environment commercial
+
+    .NOTES
+    File Name      : Invoke-AfterARMDeployment.ps1
     This script will need to be ran after deploying the ARM template located at the below GitHUb repo
       - https://github.com/Pickax1/SCuBAGear_Automation/tree/main
 
@@ -13,14 +27,13 @@
 
 #>
 
-## Requires Az.Accounts,
+# Requires Az.Accounts, Az.Automation, Az.Compute, Az.Resources, Az.Storage, Microsoft.Graph, Microsoft.Graph.Applications
 
 Param(
     #Azure government or commercial
     [Parameter(Mandatory=$false)]
     [ValidateSet("commercial","gcc","gcchigh","dod")]
     [string]$Environment = "commercial"
-
 )
 ####################################################
 # Step 1 - Making connections and setting variables
@@ -29,18 +42,23 @@ switch ($Environment) {
     "commercial" {
         $AzureEnvironment = "AzureCloud"
         $ManagementURL = "https://management.azure.com"
+        $GraphEnvironment = "Global"
     }
     "gcc" {
         $AzureEnvironment = "AzureCloud"
         $ManagementURL = "https://management.azure.com"
+        $GraphEnvironment = "Global"
     }
     "gcchigh" {
         $AzureEnvironment = "AzureUSGovernment"
         $ManagementURL = "https://management.usgovcloudapi.net"
+        $GraphEnvironment = "USGov"
+
     }
     "dod" {
         $AzureEnvironment = "AzureUSGovernment"
         $ManagementURL = "https://management.usgovcloudapi.net"
+        $GraphEnvironment = "USGovDoD"
     }
 }
 
@@ -52,6 +70,7 @@ Connect-AzAccount -Environment $AzureEnvironment
 Get-AzResourceGroup | Select-Object ResourceGroupName, Location | Out-Host
 
 $RG = Read-Host "   Enter your Resource Group Name that you deployed the ARM template to, if unknown review the list from above:"
+$RG = $RG.Trim()
 
 Write-Output "  Creating Variables for later use"
 $VMTag = (Get-AzResource -Tag @{ "Project"="SCuBAGear_Automation"} -ResourceType 'Microsoft.Compute/VirtualMachines').Name
@@ -135,25 +154,15 @@ Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupN
 Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'CertThumbprint' -Value $Thumbprint -Encrypted $True | Out-Null
 Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'StorageAccountName' -Value $SA -Encrypted $True | Out-Null
 Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'Org' -Value $Org -Encrypted $True | Out-Null
+Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'Environment' -Value $Environment -Encrypted $True | Out-Null
 
 # Non-Interactive Permission Requirements - https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md
-$roles = @(
-    "Directory.Read.All", #Entra ID and SharePoint
-    "GroupMember.Read.All", #Entra ID
-    "Organization.Read.All", #Entra ID
-    "Policy.Read.All", #Entra ID
-    "RoleManagement.Read.Directory", #Entra ID
-    "User.Read.All", #Entra ID
-    "PrivilegedEligibilitySchedule.Read.AzureADGroup", #Entra ID
-    "PrivilegedAccess.Read.AzureADGroup", #Entra ID
-    "RoleManagementPolicy.Read.AzureADGroup", #Entra ID
-    "Sites.FullControl.All", # SharePoint
-    "Exchange.ManageAsApp" # Defender and Exchange
-)
+$perms = (Get-Content ".\src\SP_Permissions.json" -raw | ConvertFrom-Json).SCuBAGearPermissions
+$roles = $perms.Permission.Name
 
 # Assign API permissions to Service Principal
 Write-Output "  Connecting to Microsoft Graph to assign $($Roles.count) API permissions to $($SP.DisplayName) Service Principal"
-Connect-MgGraph -Scopes Application.Read.All, AppRoleAssignment.ReadWrite.All, RoleManagement.ReadWrite.Directory
+Connect-MgGraph -Scopes Application.Read.All, AppRoleAssignment.ReadWrite.All, RoleManagement.ReadWrite.Directory -Environment $GraphEnvironment
 $getGPerms = (Get-MgServicePrincipal -Filter "AppId eq '00000003-0000-0000-c000-000000000000'").approles | Where-Object{$_.Value -in $Roles}
 $GraphID = (Get-MgServicePrincipal -Filter "AppId eq '00000003-0000-0000-c000-000000000000'").id
 
@@ -165,7 +174,8 @@ foreach ($perm in $getGPerms){
 # Add Service Principal to the appropriate groups
 # https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#service-principal
 # Define roles
-$roles = @("Global Reader")
+$Scubaroles = (Get-Content ".\src\SP_Permissions.json" -raw | ConvertFrom-Json).SCuBAGearRoles
+$roles = $Scubaroles.RoleName
 
 # Assign roles
 foreach ($role in $roles) {

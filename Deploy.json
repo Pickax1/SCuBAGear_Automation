@@ -508,7 +508,7 @@
                 "logProgress": false,
                 "logActivityTrace": 0,
                 "publishContentLink": {
-					"uri": "https://raw.githubusercontent.com/Pickax1/SCuBAGear_Automation/main/src/Run_SCuBAGear.ps1"
+          "uri": "[concat(parameters('templateBasePath'), '/src/Run_SCuBAGear.ps1')]"
 				}
             }
         },
@@ -527,7 +527,7 @@
                 "logProgress": false,
                 "logActivityTrace": 0,
                 "publishContentLink": {
-					"uri": "https://raw.githubusercontent.com/Pickax1/SCuBAGear_Automation/main/src/Run_SharePoint.ps1"
+          "uri": "[concat(parameters('templateBasePath'), '/src/Run_SharePoint.ps1')]"
 				}
             }
         },

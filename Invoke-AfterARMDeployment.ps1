@@ -1,4 +1,18 @@
 <#
+    .SYNOPSIS  
+    This script is used to automate the deployment of SCuBAGear on a Virtual Machine (VM) in Azure.
+
+    .DESCRIPTION
+    This script will automate the deployment of SCuBAGear on a Virtual Machine (VM) in Azure. The script will create a self-signed certificate on the VM, create a service principal, assign the service principal with the correct permissions in order to run SCuBAGear, add the hybrid worker extension on the VM, and associate the service principal with Power Platform.
+
+    .PARAMETER Environment
+    The environment to deploy SCuBAGear to, the default is commercial. The options are commercial, gcc, gcchigh, and dod.
+
+    .EXAMPLE
+    Invoke-AfterARMDeployment.ps1 -Environment commercial
+
+    .NOTES
+    File Name      : Invoke-AfterARMDeployment.ps1
     This script will need to be ran after deploying the ARM template located at the below GitHUb repo
       - https://github.com/Pickax1/SCuBAGear_Automation/tree/main
 
@@ -13,19 +27,75 @@
 
 #>
 
-## Requires Az.Accounts,
+Param(
+    #Azure government or commercial
+    [Parameter(Mandatory=$true)]
+    [ValidateSet("commercial","gcc","gcchigh","dod")]
+    [string]$Environment = "commercial"
+)
+
+# Check and install required modules if they are not already installed
+$modules = @("Az.Accounts", "Az.Automation", "Az.Compute", "Az.Resources", "Az.Storage", "Microsoft.Graph.Authentication", "Microsoft.Graph.Applications", "Microsoft.Graph.Identity.Governance", "Microsoft.PowerApps.Administration.PowerShell")
+
+foreach ($module in $modules) {
+    if (!(Get-Module -ListAvailable -Name $module)) {
+        Try{
+            Write-Host "Installing Module: $module"
+            Install-Module -Name $module -Confirm:$False
+        }Catch{
+            Write-Error "Encountered error installing module: $module"
+        }   
+    }
+    Try{
+        Write-Host "Importing Module: $module"
+        Import-Module -Name $module
+    }Catch{
+        Write-Error "Encountered error importing module: $module"
+    }   
+}
 
 ####################################################
 # Step 1 - Making connections and setting variables
 ####################################################
+switch ($Environment) {
+    "commercial" {
+        $AzureEnvironment = "AzureCloud"
+        $ManagementURL = "https://management.azure.com"
+        $GraphEnvironment = "Global"
+    }
+    "gcc" {
+        $AzureEnvironment = "AzureCloud"
+        $ManagementURL = "https://management.azure.com"
+        $GraphEnvironment = "Global"
+    }
+    "gcchigh" {
+        $AzureEnvironment = "AzureUSGovernment"
+        $ManagementURL = "https://management.usgovcloudapi.net"
+        $GraphEnvironment = "USGov"
+
+    }
+    "dod" {
+        $AzureEnvironment = "AzureUSGovernment"
+        $ManagementURL = "https://management.usgovcloudapi.net"
+        $GraphEnvironment = "USGovDoD"
+    }
+}
 Write-Host "Step 1: Connecting to Azure and setting variables" -ForegroundColor Yellow
 # Connect
-Connect-AzAccount
+Connect-AzAccount -Environment $AzureEnvironment
 
 # Retrieve all resource groups
-Get-AzResourceGroup | Select-Object ResourceGroupName, Location | Out-Host
+$RGs = Get-AzResourceGroup | Select-Object ResourceGroupName, Location 
+$RGs | Out-Host
 
 $RG = Read-Host "   Enter your Resource Group Name that you deployed the ARM template to, if unknown review the list from above:"
+
+if ($RGs.ResourceGroupName -contains $RG) {
+    # Selected valid RG
+} else {
+    Write-Error "Invalid input. Please enter a valid Resource Group"
+    $RG = Read-Host "   Enter your Resource Group Name that you deployed the ARM template to, if unknown review the list from above:"
+}
 
 Write-Output "  Creating Variables for later use"
 $VMTag = (Get-AzResource -Tag @{ "Project"="SCuBAGear_Automation"} -ResourceType 'Microsoft.Compute/VirtualMachines').Name
@@ -37,14 +107,7 @@ $VMName = $SCuBAVM.Name
 $AutoAccountName = (Get-AzAutomationAccount -ResourceGroupName $RG).AutomationAccountName
 $SubscriptionID = (Get-AzSubscription).ID
 $Org = (Get-AzTenant).DefaultDomain
-if(Get-Module -ListAvailable Az.Storage){
-    Import-Module Az.Storage
-    $SA = (Get-AzStorageAccount -ResourceGroupName $RG).StorageAccountName
-}Else{
-    Install-Module Az.Storage -Confirm:$False
-    Import-Module Az.Storage
-    $SA = (Get-AzStorageAccount -ResourceGroupName $RG).StorageAccountName
-}
+$SA = (Get-AzStorageAccount -ResourceGroupName $RG).StorageAccountName
 
 ########################################
 # Step 2 - Create the certificate on VM
@@ -109,49 +172,43 @@ Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupN
 Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'CertThumbprint' -Value $Thumbprint -Encrypted $True | Out-Null
 Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'StorageAccountName' -Value $SA -Encrypted $True | Out-Null
 Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'Org' -Value $Org -Encrypted $True | Out-Null
+Set-AzAutomationVariable -AutomationAccountName $AutoAccountName -ResourceGroupName $VMResourceGroup -Name 'Environment' -Value $Environment -Encrypted $True | Out-Null
 
-# Non-Interactive Permission Requirements - https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md
-$roles = @(
-    "Directory.Read.All", #Entra ID and SharePoint
-    "GroupMember.Read.All", #Entra ID
-    "Organization.Read.All", #Entra ID
-    "Policy.Read.All", #Entra ID
-    "RoleManagement.Read.Directory", #Entra ID
-    "User.Read.All", #Entra ID
-    "PrivilegedEligibilitySchedule.Read.AzureADGroup", #Entra ID
-    "PrivilegedAccess.Read.AzureADGroup", #Entra ID
-    "RoleManagementPolicy.Read.AzureADGroup", #Entra ID
-    "Sites.FullControl.All", # SharePoint
-    "Exchange.ManageAsApp" # Defender and Exchange
-)
+# Download and parse the permissions file
+$PermissionsUrl = "https://raw.githubusercontent.com/Pickax1/SCuBAGear_Automation/main/src/SP_Permissions.json"
+$permissionsContent = (Invoke-WebRequest -Uri $PermissionsUrl -UseBasicParsing | ConvertFrom-Json)
 
-# Assign API permissions to Service Principal
-Write-Output "  Connecting to Microsoft Graph to assign $($Roles.count) API permissions to $($SP.DisplayName) Service Principal"
-Connect-MgGraph -Scopes Application.Read.All, AppRoleAssignment.ReadWrite.All, RoleManagement.ReadWrite.Directory
-$getGPerms = (Get-MgServicePrincipal -Filter "AppId eq '00000003-0000-0000-c000-000000000000'").approles | Where-Object{$_.Value -in $Roles}
-$GraphID = (Get-MgServicePrincipal -Filter "AppId eq '00000003-0000-0000-c000-000000000000'").id
+Connect-MgGraph -Scopes Application.Read.All, AppRoleAssignment.ReadWrite.All, RoleManagement.ReadWrite.Directory -Environment $GraphEnvironment
 
-# Assign roles for Graph
-foreach ($perm in $getGPerms){
-    New-MgServicePrincipalAppRoleAssignment -ServicePrincipalId $ServicePrincipalID -PrincipalId $ServicePrincipalID -ResourceId $GraphID -AppRoleId $perm.id
+# Parse the permissions file
+foreach ($Product in $($permissionsContent).SCuBAGearPermissions) {
+    $ProductName = $Product.ProductName
+
+    $Count = $Product.Permission.count
+    For($i = 0; $i -lt $Count; $i++){
+        $AppRoleID = $Product.Permission[$i].id
+        $Filter = "AppId eq '" + $($Product.resourceAPIAppId) + "'"
+        $ProductResourceID = (Get-MgServicePrincipal -Filter $Filter).ID
+        $APIPermissionName = $Product.Permission[$i].Name
+        Write-Output "  Assigning $($SP.DisplayName) Service Principal $ProductName API Permission: $APIPermissionName"
+        $GrpahAPIAssign = New-MgServicePrincipalAppRoleAssignment -ServicePrincipalId $ServicePrincipalID -PrincipalId $ServicePrincipalID -ResourceId $ProductresourceId -AppRoleId $AppRoleID
+    }
 }
 
-# Add Service Principal to the appropriate groups
-# https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#service-principal
-# Define roles
-$roles = @("Global Reader")
-
-# Assign roles
-foreach ($role in $roles) {
-    $roleDefinition = Get-MgRoleManagementDirectoryRoleDefinition -Filter "displayName eq '$role'"
-    New-MgRoleManagementDirectoryRoleAssignment -PrincipalId $servicePrincipalId -RoleDefinitionId $roleDefinition.Id -DirectoryScopeId "/"
+ForEach($Role in $($PermissionsContent).SCuBAGearRoles){
+    $RoleName = $Role.RoleName
+    Write-Output "  Assigning $($SP.DisplayName) Service Principal to $RoleName role"
+    $roleDefinition = Get-MgRoleManagementDirectoryRoleDefinition -Filter "displayName eq '$RoleName'"
+    $RoleAssign = New-MgRoleManagementDirectoryRoleAssignment -PrincipalId $servicePrincipalId -RoleDefinitionId $roleDefinition.Id -DirectoryScopeId "/"
 }
+
 
 $Scope = (Get-AzStorageAccount -ResourceGroupName $RG -Name $SA).id
 $AZRoles = "Storage Account Contributor", "Storage Blob Data Contributor"
 
 foreach ($AZRole in $AZRoles){
-    New-AzRoleAssignment -ApplicationId $sp.AppId -RoleDefinitionName $AZRole -Scope $Scope
+    Write-Output "  Assigning $($SP.DisplayName) Service Principal to $AzRole role"
+    $StorageRole = New-AzRoleAssignment -ApplicationId $sp.AppId -RoleDefinitionName $AZRole -Scope $Scope
 }
 
 ################################################
@@ -162,6 +219,7 @@ Write-Host "Step 4: Adding Hybrid Worker Extension on $($VMName) Virtual Machine
 # Add SCuBA to the Hybrid Worker Group
 $HybridGroupName = (Get-AzAutomationHybridWorkerGroup -ResourceGroupName $RG -AutomationAccountName $AutoAccountName).Name
 Write-Output "  Adding $($VMName) Virtual Machine to be a member of the $($HybridGroupName)"
+
 $HybridWorkerParams = @{
     Name = $VM_ID
     AutomationAccountName = $AutoAccountName
@@ -174,10 +232,10 @@ New-AzAutomationHybridRunbookWorker @HybridWorkerParams
 # Install hybrid worker extension on VM
 $VMLocation = $SCuBAVM.Location
 
-$uri = "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$RG/providers/Microsoft.Automation/automationAccounts/$AutoAccountName`?api-version=2021-06-22&`$expand=properties(`$select=automationHybridServiceUrl)"
+# Construct the Registration URL
+$uri = "$ManagementURL/subscriptions/$subscriptionId/resourceGroups/$RG/providers/Microsoft.Automation/automationAccounts/$AutoAccountName`?api-version=2021-06-22&`$expand=properties(`$select=automationHybridServiceUrl)"
 $HybridURL = ((Invoke-AzRestMethod -Uri $uri).Content | ConvertFrom-Json).properties.automationHybridServiceUrl
  
-# Construct the Registration URL
 $Settings = @{
     AutomationAccountURL = $HybridURL
 }
@@ -191,7 +249,7 @@ Try{
         -EnableAutomaticUpgrade $true
 
     if ((Get-AzVMExtension -ResourceGroupName $RG -VMName $VMName -Name HybridWorkerExtension).ProvisioningState -eq 'Succeeded' ){
-        Write-Output "  Hybrid Worker Extension was successfully installed on $($VMName)" -ForegroundColor Green
+        Write-Host "  Hybrid Worker Extension was successfully installed on $($VMName)" -ForegroundColor Green
     }else{
         Write-Host "   Hybrid Worker Extension failed to install" -ForegroundColor Red
     }
@@ -199,29 +257,55 @@ Try{
     Write-Error $_.Exception
 }
 
-Write-Output "  Restarting Hybrid Worker Service on $($SCuBAVM.Name) Virtual Machine to jump start hybrid worker connection"
-# Add code to restart the service
-$Script = @"
-    Restart-Service -Name HybridWorkerService -Force
-"@
-Invoke-AzVMRunCommand -ResourceGroupName $VMResourceGroup -VMName $VMName -CommandId 'RunPowerShellScript' -ScriptString $Script
-
 ###########################################################
 # Step 5 - Associate Service Principal with Power Platform
 ###########################################################
-<#
-    Write-Host "Step 5: Performing Power Platform Requirements" -ForegroundColor Yellow
-    # https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#power-platform
-    Import-Module Microsoft.PowerApps.Administration.PowerShell
-    $appId = ($SP).AppID
-    $TenantID = ($SP).AppOwnerOrganizationID
 
-    # Login interactively with a tenant administrator for Power Platform
-    $PowerLogon = Add-PowerAppsAccount -Endpoint prod -TenantID $tenantId 
+Write-Host "Step 5: Performing Power Platform Requirements" -ForegroundColor Yellow
+# https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#power-platform
 
-    # Register a new application, this gives the SPN / client application same permissions as a tenant admin
-    $PowerAppSetup = New-PowerAppManagementApp -ApplicationId $appId
-#>
+$appId = ($SP).AppID
+$TenantID = ($SP).AppOwnerOrganizationID
+
+# Login interactively with a tenant administrator for Power Platform
+$PowerLogon = Add-PowerAppsAccount -Endpoint prod -TenantID $tenantId 
+
+# Register a new application, this gives the SPN / client application same permissions as a tenant admin
+$PowerAppSetup = New-PowerAppManagementApp -ApplicationId $appId
+
+
+################################
+# Step 6 - Install PowerShell 7
+################################
+# Installing PowerShell 7 resolves an error when connecting to Exchange online
+
+Write-Host "Step 6: Installing PowerShell 7 on $($VMName) Virtual Machine  `r`n" -ForegroundColor Yellow
+$PwshInstallScript = @"
+    # Define the GitHub API URL for the latest PowerShell release
+    `$apiUrl = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest"
+
+    # Fetch the latest release information
+    `$releaseInfo = Invoke-RestMethod -Uri `$apiUrl
+
+    # Extract the URL for the MSI file from the release assets
+    `$msiUrl = `$releaseInfo.assets | Where-Object { `$_.name -like "*win-x64.msi" } | Select-Object -ExpandProperty browser_download_url
+
+    # Define the path to save the MSI file
+    `$msiPath = "`$env:TEMP\PowerShell-latest-win-x64.msi"
+
+    # Download the MSI file
+    Invoke-WebRequest -Uri `$msiUrl -OutFile `$msiPath
+
+    # Install the MSI file silently
+    Start-Process -FilePath "msiexec.exe" -ArgumentList "/i", `$msiPath, "/quiet", "/norestart" -Wait
+
+    # Clean up the MSI file after installation
+    Remove-Item -Path `$msiPath
+
+    # This is needed so the Hybrid Worker can read the PS 7 ENV Variables, if not the runbook will fail since it's not aware pwsh.exe in valid.
+    Restart-Service -Name HybridWorkerService -Force
+"@
+Invoke-AzVMRunCommand -ResourceGroupName $VMResourceGroup -VMName $VMName -CommandId 'RunPowerShellScript' -ScriptString $PwshInstallScript
 
 ##########
 # Cleanup

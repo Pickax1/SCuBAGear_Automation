@@ -30,10 +30,10 @@
 		},
 		"_artifactsLocation": {
 			"type": "string",
-			"defaultValue": "https://github.com/Pickax1/SCuBAGear_Automation/",
 			"metadata": {
 			"description": "URI to artifacts location"
-			}
+			},
+      "defaultValue": "[deployment().properties.templateLink.uri]"
 		},
         "adminUsername": {
             "type": "string",
@@ -510,7 +510,7 @@
                 "logProgress": false,
                 "logActivityTrace": 0,
                 "publishContentLink": {
-					"uri": "[concat(parameters('templateBasePath'), '/src/Run_SCuBAGear.ps1')]"
+					"url": "[uri(parameters('_artifactsLocation'), 'src/Run_SCuBAGear.ps1')]"
 				}
             }
         },
@@ -529,7 +529,7 @@
                 "logProgress": false,
                 "logActivityTrace": 0,
                 "publishContentLink": {
-					"uri": "[concat(parameters('templateBasePath'), '/src/Run_SharePoint.ps1')]"
+					"url": "[uri(parameters('_artifactsLocation'), 'src/Run_SharePoint.ps1')]"
 				}
             }
         },

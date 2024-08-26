@@ -15,12 +15,38 @@
 
 ## Requires Az.Accounts,
 
+Param(
+    #Azure government or commercial
+    [Parameter(Mandatory=$false)]
+    [ValidateSet("commercial","gcc","gcchigh","dod")]
+    [string]$Environment = "commercial"
+
+)
 ####################################################
 # Step 1 - Making connections and setting variables
 ####################################################
+switch ($Environment) {
+    "commercial" {
+        $AzureEnvironment = "AzureCloud"
+        $ManagementURL = "https://management.azure.com"
+    }
+    "gcc" {
+        $AzureEnvironment = "AzureCloud"
+        $ManagementURL = "https://management.azure.com"
+    }
+    "gcchigh" {
+        $AzureEnvironment = "AzureUSGovernment"
+        $ManagementURL = "https://management.usgovcloudapi.net"
+    }
+    "dod" {
+        $AzureEnvironment = "AzureUSGovernment"
+        $ManagementURL = "https://management.usgovcloudapi.net"
+    }
+}
+
 Write-Host "Step 1: Connecting to Azure and setting variables" -ForegroundColor Yellow
 # Connect
-Connect-AzAccount
+Connect-AzAccount -Environment $AzureEnvironment
 
 # Retrieve all resource groups
 Get-AzResourceGroup | Select-Object ResourceGroupName, Location | Out-Host
@@ -174,7 +200,7 @@ New-AzAutomationHybridRunbookWorker @HybridWorkerParams
 # Install hybrid worker extension on VM
 $VMLocation = $SCuBAVM.Location
 
-$uri = "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$RG/providers/Microsoft.Automation/automationAccounts/$AutoAccountName`?api-version=2021-06-22&`$expand=properties(`$select=automationHybridServiceUrl)"
+$uri = "$ManagementURL/subscriptions/$subscriptionId/resourceGroups/$RG/providers/Microsoft.Automation/automationAccounts/$AutoAccountName`?api-version=2021-06-22&`$expand=properties(`$select=automationHybridServiceUrl)"
 $HybridURL = ((Invoke-AzRestMethod -Uri $uri).Content | ConvertFrom-Json).properties.automationHybridServiceUrl
  
 # Construct the Registration URL

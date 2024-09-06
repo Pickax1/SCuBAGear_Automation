@@ -66,7 +66,7 @@ $pfxBytes = [Convert]::FromBase64String($PrivKey)
 # Create an X509Certificate2 object from the PFX bytes
 $pfxCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
 #$pfxCert.Import($pfxBytes, $SS, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
-$pfxCert.Import($pfxBytes, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
+$pfxCert.Import($pfxBytes, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::DefaultKeySet)
 
 # Import the certificate into the specified certificate store
 $store1 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "LocalMachine")
@@ -78,48 +78,6 @@ $store2 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My
 $store2.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
 $store2.Add($pfxCert)
 $store2.Close()
-
-# Download SCuBAGear Module from Storage Account
-$storageAccountName = $ENV:StorageAccountName
-$resourceGroupName = $ENV:ResourceGroup
-$containerName = $ENV:ContainerName
-
-# Get the latest release information from GitHub
-$githubApiUrl = "https://api.github.com/repos/cisagov/ScubaGear/releases/latest"
-$githubResponse = Invoke-RestMethod -Uri $githubApiUrl
-$latestReleaseUrl = ($githubResponse.assets | Where-Object { $_.name -like "ScubaGear*.zip" }).browser_download_url
-$ZipName = $githubResponse.Assets.name
-$GitHubDate = $githubResponse.created_at.ToUniversalTime()
-$destinationPath = "C:\$ZipName"
-
-# Get the current version stored in Azure Storage
-$ctx = (Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName).Context
-$MostRecentinStorage = (Get-AzStorageBlob -Container $containerName -Context $ctx | Sort-Object -Descending LastModified -Top 1).Name
-#$blob = Get-AzStorageBlob -Container $containerName -Blob $ZipName -Context $ctx
-$StorageDate = $MostRecentinStorage.LastModified.UtcDateTime
-
-# Compare the versions and update the blob if necessary
-if ($GitHubDate -gt $StorageDate) {
-    # Download the latest release from GitHub
-    $LocalPath = "C:\$ZipName"
-    Invoke-WebRequest -Uri $latestReleaseUrl -OutFile $LocalPath
-
-    # Overwrite the file in Azure Storage
-    Set-AzStorageBlobContent -File $localPath -Container $containerName -Blob $ZipName -Context $ctx
-
-    Write-Output "The file in Azure Storage has been updated with the latest version from GitHub."
-
-    # Extract the ZIP file
-    Expand-Archive -Path $destinationPath -DestinationPath "C:\" -Force
-    
-} else {
-    Write-Output "The file in Azure Storage is already up-to-date."
-    $LocalPath = "C:\$MostRecentinStorage"
-    Get-AzStorageBlobContent -Container $containerName -Blob $MostRecentinStorage -Destination $LocalPath
-
-    # Extract the ZIP file
-    Expand-Archive -Path $LocalPath -DestinationPath "C:\" -Force
-}
 
 $FilePath = 'C:\Program Files\PowerShell\7\pwsh.exe'
 if($FilePath){

@@ -91,27 +91,13 @@ Function Start-ResourceConnection {
     Connect-Azaccount -ServicePrincipal -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID
 }
 
-if((Get-Module -ListAvailable 'SCuBAGear')){
-    Write-Output "Importing SCuBAGear Module...."
-    Import-Module -Name SCuBAGear -Force
+Write-Output "Importing SCuBAGear Module...."
+$modulePath = "C:\ScubaGear-main\PowerShell\ScubaGear\ScubaGear.psd1"
+Import-Module -Name $modulePath
 
-    # This will check for depencies and latest versions
-    Write-Output "Initializing SCuBAGear (This can take awhile)...."
-    Initialize-SCuBA -ScubaParentDirectory C:\
+# This will check for depencies and latest versions
+Write-Output "Initializing SCuBAGear (This can take awhile)...."
+Initialize-SCuBA -ScubaParentDirectory C:\
 
-    Start-ResourceConnection  
-    Start-SCuBA           
-}else{
-    # Install and import SCuBAGear module if not already installed and loaded
-    Write-Output "Installing SCuBAGear Module...."
-    Install-Module SCuBAGear -Force -Confirm:$False
-    Write-Output "Importing SCuBAGear Module...."
-    Import-Module SCuBAGear -Force
-
-    # This will check for depencies and latest versions
-    Write-Output "Initializing SCuBAGear (This can take awhile)...."
-    Initialize-SCuBA -ScubaParentDirectory C:\
-
-    Start-ResourceConnection
-    Start-SCuBA
-}
+Start-ResourceConnection  
+Start-SCuBA

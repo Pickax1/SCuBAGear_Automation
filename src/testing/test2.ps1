@@ -128,7 +128,7 @@ if ($GitHubDate -gt $StorageDate) {
 
 } else {
     Write-Output "The file in Azure Storage is already up-to-date."
-    $LocalPath = "C:\$MostRecentinStorage"
+    $LocalPath = "C:\$($MostRecentinStorage.Name)"
     Get-AzStorageBlobContent -Container $containerName -Blob $MostRecentinStorage.Name -Destination $LocalPath -Context $ctx
 
     # Extract the ZIP file

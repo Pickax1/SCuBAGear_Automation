@@ -31,11 +31,20 @@ $TenantID = $ENV:TenantID
 $ClientID = $ENV:ClientID
 $Org = $ENV:Org
 $StorageAccountName = $ENV:StorageAccountName
-$ContainerName = "scuba-$TenantID-$Date".ToLower()
+
+Function Start-ResourceConnection {
+    # Connect to Azure and Graph using the service principal and certficate thumbprint
+    Write-Output "Connecting to Azure"
+    Connect-Azaccount -ServicePrincipal -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID
+}
+
+Start-ResourceConnection
+$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
 
 function Invoke-StorageTransfer {
     Try{
         Write-Output "Service Principal Connected to Azure for writing result to Storage Account"
+        $ContainerName = "scuba-$TenantID-$Date".ToLower()
         $Report = (Get-ChildItem -Path "C:\" -Filter "M365Baseline*" | Sort-Object -Descending -Property LastWriteTime | select-object -First 1).Name
         #$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
         
@@ -85,16 +94,8 @@ Function Start-SCuBA {
     Invoke-StorageTransfer
 
 }
-Function Start-ResourceConnection {
-    # Connect to Azure and Graph using the service principal and certficate thumbprint
-    Write-Output "Connecting to Azure"
-    Connect-Azaccount -ServicePrincipal -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID
-}
-
-Start-ResourceConnection
 
 # Download SCuBAGear Module from Storage Account
-$storageAccountName = $ENV:StorageAccountName
 $containerName = $ENV:ContainerName
 
 # Get the latest release information from GitHub
@@ -106,11 +107,9 @@ $GitHubDate = $githubResponse.created_at
 $destinationPath = "C:\$ZipName"
 
 # Get the current version stored in Azure Storage
-#$ctx = (Get-AzStorageAccount -ResourceGroupName $resourceGroupName -Name $storageAccountName).Context
-$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
-$MostRecentinStorage = (Get-AzStorageBlob -Container $containerName -Context $ctx | Sort-Object -Descending LastModified)
-#$blob = Get-AzStorageBlob -Container $containerName -Blob $ZipName -Context $ctx
+$MostRecentinStorage = (Get-AzStorageBlob -Container $containerName -Context $ctx | Where-Object {$_.Name -like "ScuBAGear-*.zip"}  | Sort-Object -Descending LastModified)
 $StorageDate = $MostRecentinStorage.LastModified.UtcDateTime
+$StorageDate = $StorageDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Compare the versions and update the blob if necessary
 if ($GitHubDate -gt $StorageDate) {

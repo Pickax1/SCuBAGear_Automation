@@ -37,7 +37,7 @@ function Invoke-StorageTransfer {
     Try{
         Write-Output "Service Principal Connected to Azure for writing result to Storage Account"
         $Report = (Get-ChildItem -Path "C:\" -Filter "M365Baseline*" | Sort-Object -Descending -Property LastWriteTime | select-object -First 1).Name
-        $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
+        #$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
         
         Try{
             $StorageContainer = New-AzStorageContainer -Name $ContainerName -Context $ctx

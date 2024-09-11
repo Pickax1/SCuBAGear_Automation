@@ -11,7 +11,8 @@ $msiUrl = $releaseInfo.assets | Where-Object { $_.name -like "*win-x64.msi" } | 
 $msiPath = "$env:TEMP\PowerShell-latest-win-x64.msi"
 
 # Download the MSI file
-Invoke-WebRequest -Uri $msiUrl -OutFile $msiPath
+$ProgressPreference = 'SilentlyContinue' # Speed up the download
+Invoke-WebRequest -Uri $msiUrl -OutFile $msiPath -UseBasicParsing
 
 # Install the MSI file silently
 Start-Process -FilePath "msiexec.exe" -ArgumentList "/i", $msiPath, "/quiet", "/norestart" -Wait

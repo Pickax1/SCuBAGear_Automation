@@ -32,10 +32,19 @@ $ClientID = $ENV:ClientID
 $Org = $ENV:Org
 $StorageAccountName = $ENV:StorageAccountName
 
+switch ($Environment.ToLower().Trim()) {
+    {"commercial"  -or "gcc"}{
+        $AzureEnvironment = "AzureCloud"
+    }
+    {"gcchigh" -or "dod"} {
+        $AzureEnvironment = "AzureUSGovernment"
+    }
+}
+
 Function Start-ResourceConnection {
     # Connect to Azure and Graph using the service principal and certficate thumbprint
     Write-Output "Connecting to Azure"
-    Connect-Azaccount -ServicePrincipal -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID
+    Connect-Azaccount -ServicePrincipal -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID -Environment $AzureEnvironment
 }
 
 Start-ResourceConnection

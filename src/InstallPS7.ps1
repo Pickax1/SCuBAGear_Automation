@@ -1,3 +1,4 @@
+$ErrorActionPreference = "Stop"
 # Define the GitHub API URL for the latest PowerShell release
 $apiUrl = "https://api.github.com/repos/PowerShe/PowerShell/releases/latest"
 #$apiUrl = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest"

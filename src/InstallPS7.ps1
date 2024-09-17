@@ -1,5 +1,6 @@
 # Define the GitHub API URL for the latest PowerShell release
-$apiUrl = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest"
+$apiUrl = "https://api.github.com/repos/PowerShe/PowerShell/releases/latest"
+#$apiUrl = "https://api.github.com/repos/PowerShell/PowerShell/releases/latest"
 
 # Fetch the latest release information
 $releaseInfo = Invoke-RestMethod -Uri $apiUrl
@@ -8,7 +9,7 @@ $releaseInfo = Invoke-RestMethod -Uri $apiUrl
 $msiUrl = $releaseInfo.assets | Where-Object { $_.name -like "*win-x64.msi" } | Select-Object -ExpandProperty browser_download_url
 
 # Define the path to save the MSI file
-$msiPath = "$env:TEMP\PowerShell-latest-win-x64.mss"
+$msiPath = "$env:TEMP\PowerShell-latest-win-x64.msi"
 
 # Download the MSI file
 $ProgressPreference = 'SilentlyContinue' # Speed up the download

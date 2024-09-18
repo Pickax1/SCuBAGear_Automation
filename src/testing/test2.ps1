@@ -32,6 +32,7 @@ $TenantID = $ENV:TenantID
 $ClientID = $ENV:ClientID
 $Org = $ENV:Org
 $StorageAccountName = $ENV:StorageAccountName
+$OutPutContainerName = "scuba-$TenantID-$Date".ToLower()
 
 switch ($Environment.ToLower().Trim()) {
     {"commercial"  -or "gcc"}{
@@ -54,20 +55,19 @@ $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnecte
 function Invoke-StorageTransfer {
     Try{
         Write-Output "Service Principal Connected to Azure for writing result to Storage Account"
-        $ContainerName = "scuba-$TenantID-$Date".ToLower()
         $Report = (Get-ChildItem -Path "C:\" -Filter "M365Baseline*" | Sort-Object -Descending -Property LastWriteTime | select-object -First 1).Name
         #$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
         
         Try{
-            $StorageContainer = New-AzStorageContainer -Name $ContainerName -Context $ctx
-            Write-Output "New Azure Blob Container Created for SCuBAGear Results - $ContainerName"
+            $StorageContainer = New-AzStorageContainer -Name $OutPutContainerName -Context $ctx
+            Write-Output "New Azure Blob Container Created for SCuBAGear Results - $OutPutContainerName"
         }Catch{
             Write-Output"Azure Blob Container Exists"
         }
         
         Try{
             if($Report -ne $Null){
-                $Items = Get-ChildItem -Path "C:\$Report" -Recurse | Set-AzStorageBlobContent -Container $ContainerName -Context $ctx -WarningAction SilentlyContinue
+                $Items = Get-ChildItem -Path "C:\$Report" -Recurse | Set-AzStorageBlobContent -Container $OutPutContainerName -Context $ctx -WarningAction SilentlyContinue
                 Write-Output "The below items have been Uploaded to Azure Blob Storage"
 
                 ForEach($Item in $Items.Name){

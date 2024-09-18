@@ -24,7 +24,8 @@ Try{
 }
 
 # Define some variables for Graph connection and writing to the storage account
-$CertificateThumbprint = (Get-ChildItem -Path 'Cert:\LocalMachine\My' | Where-Object { $_.Subject -eq 'CN=SCuBAGearAutomation' }).Thumbprint
+$CertName = 'CN=' + $ENV:CertName
+$CertificateThumbprint = (Get-ChildItem -Path 'Cert:\LocalMachine\My' | Where-Object { $_.Subject -eq $($CertName) }).Thumbprint
 $Date= Get-Date -Format FileDateTime
 $Environment = $ENV:TenantLocation
 $TenantID = $ENV:TenantID

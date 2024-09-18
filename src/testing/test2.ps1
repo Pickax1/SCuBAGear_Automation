@@ -32,7 +32,6 @@ $TenantID = $ENV:TenantID
 $ClientID = $ENV:ClientID
 $Org = $ENV:Org
 $StorageAccountName = $ENV:StorageAccountName
-$OutPutContainerName = "scuba-$TenantID-$Date".ToLower()
 
 switch ($Environment.ToLower().Trim()) {
     {"commercial"  -or "gcc"}{
@@ -55,6 +54,7 @@ $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnecte
 function Invoke-StorageTransfer {
     Try{
         Write-Output "Service Principal Connected to Azure for writing result to Storage Account"
+        $OutPutContainerName = "scuba-$TenantID-$Date".ToLower()
         $Report = (Get-ChildItem -Path "C:\" -Filter "M365Baseline*" | Sort-Object -Descending -Property LastWriteTime | select-object -First 1).Name
         #$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
         

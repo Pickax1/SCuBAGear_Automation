@@ -34,10 +34,16 @@ $Org = $ENV:Org
 $StorageAccountName = $ENV:StorageAccountName
 
 switch ($Environment.ToLower().Trim()) {
-    {"commercial"  -or "gcc"}{
+    "commercial" {
         $AzureEnvironment = "AzureCloud"
     }
-    {"gcchigh" -or "dod"} {
+    "gcc" {
+        $AzureEnvironment = "AzureCloud"
+    }
+    "gcchigh" {
+        $AzureEnvironment = "AzureUSGovernment"
+    }
+    "dod" {
         $AzureEnvironment = "AzureUSGovernment"
     }
 }

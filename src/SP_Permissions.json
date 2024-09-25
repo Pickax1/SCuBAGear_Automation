@@ -39,10 +39,6 @@
                     {
                         "id": "edb419d6-7edc-42a3-9345-509bfdf5d87c",
                         "name": "PrivilegedEligibilitySchedule.Read.AzureADGroup"
-                    },
-                    {
-                        "id": "a82116e5-55eb-4c41-a434-62fe8a61c773",
-                        "name": "Sites.FullControl.All"
                     }
                 ]
             },

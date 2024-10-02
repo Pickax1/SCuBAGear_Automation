@@ -73,31 +73,19 @@
             "Product": "Container",
             "Permission": [
                 {
-                    "Name": "RoleManagementPolicy.Read.AzureADGroup"
+                    "Name": "User.Read"
                 },
                 {
-                    "Name": "RoleManagement.Read.Directory"
+                    "Name": "Application.Read.All"
                 },
                 {
-                    "Name": "Directory.Read.All"
+                    "Name": "AppRoleAssignment.ReadWrite.All"
                 },
                 {
-                    "Name": "User.Read.All"
+                    "Name": "RoleManagement.ReadWrite.Directory"
                 },
                 {
-                    "Name": "GroupMember.Read.All"
-                },
-                {
-                    "Name": "PrivilegedAccess.Read.AzureADGroup"
-                },
-                {
-                    "Name": "Organization.Read.All"
-                },
-                {
-                    "Name": "Policy.Read.All"
-                },
-                {
-                    "Name": "PrivilegedEligibilitySchedule.Read.AzureADGroup"
+                    "Name": "EntitlementManagement.ReadWrite.All"
                 }
             ]
         },

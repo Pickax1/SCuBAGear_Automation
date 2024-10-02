@@ -67,5 +67,39 @@
         {
             "RoleName": "Global Reader"
         }
+    ],
+    "SCuBAGearScopes": [
+        {
+            "ProductName": "Microsoft Graph",
+            "Permission": [
+                {
+                    "Name": "RoleManagementPolicy.Read.AzureADGroup"
+                },
+                {
+                    "Name": "RoleManagement.Read.Directory"
+                },
+                {
+                    "Name": "Directory.Read.All"
+                },
+                {
+                    "Name": "User.Read.All"
+                },
+                {
+                    "Name": "GroupMember.Read.All"
+                },
+                {
+                    "Name": "PrivilegedAccess.Read.AzureADGroup"
+                },
+                {
+                    "Name": "Organization.Read.All"
+                },
+                {
+                    "Name": "Policy.Read.All"
+                },
+                {
+                    "Name": "PrivilegedEligibilitySchedule.Read.AzureADGroup"
+                }
+            ]
+        }
     ]
 }

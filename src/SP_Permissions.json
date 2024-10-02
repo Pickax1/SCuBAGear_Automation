@@ -68,9 +68,9 @@
             "RoleName": "Global Reader"
         }
     ],
-    "SCuBAGearScopes": [
+    "SCuBAGearGraphScopes": [
         {
-            "ProductName": "Microsoft Graph",
+            "Product": "Container",
             "Permission": [
                 {
                     "Name": "RoleManagementPolicy.Read.AzureADGroup"
@@ -98,6 +98,46 @@
                 },
                 {
                     "Name": "PrivilegedEligibilitySchedule.Read.AzureADGroup"
+                }
+            ]
+        },
+        {
+            "Product": "aad",
+            "Permission": [
+                {
+                    "Name": "RoleManagementPolicy.Read.AzureADGroup"
+                },
+                {
+                    "Name": "RoleManagement.Read.Directory"
+                },
+                {
+                    "Name": "Directory.Read.All"
+                },
+                {
+                    "Name": "User.Read.All"
+                },
+                {
+                    "Name": "GroupMember.Read.All"
+                },
+                {
+                    "Name": "PrivilegedAccess.Read.AzureADGroup"
+                },
+                {
+                    "Name": "Organization.Read.All"
+                },
+                {
+                    "Name": "Policy.Read.All"
+                },
+                {
+                    "Name": "PrivilegedEligibilitySchedule.Read.AzureADGroup"
+                }
+            ]
+        },
+        {
+            "Product": "exo",
+            "Permission": [
+                {
+                    "Name": "User.Read.All"
                 }
             ]
         }

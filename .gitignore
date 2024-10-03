@@ -1,0 +1,7 @@
+!/Tests/Logs/
+/Tests/Logs/*
+*.log
+*tests.ps1
+secret*
+dtolab*
+dtogov*

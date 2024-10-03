@@ -4,118 +4,64 @@
                 "resourceAPIAppId": "00000003-0000-0000-c000-000000000000",
                 "ProductName": "Microsoft Graph",
                 "Permission": [
-                    {
-                        "name": "RoleManagementPolicy.Read.AzureADGroup"
-                    },
-                    {
-                        "name": "RoleManagement.Read.Directory"
-                    },
-                    {
-                        "name": "Directory.Read.All"
-                    },
-                    {
-                        "name": "User.Read.All"
-                    },
-                    {
-                        "name": "GroupMember.Read.All"
-                    },
-                    {
-                        "name": "PrivilegedAccess.Read.AzureADGroup"
-                    },
-                    {
-                        "name": "Organization.Read.All"
-                    },
-                    {
-                        "name": "Policy.Read.All"
-                    },
-                    {
-                        "name": "PrivilegedEligibilitySchedule.Read.AzureADGroup"
-                    }
+                    "RoleManagementPolicy.Read.AzureADGroup",
+                    "RoleManagement.Read.Directory",
+                    "Directory.Read.All",
+                    "User.Read.All",
+                    "GroupMember.Read.All",
+                    "PrivilegedAccess.Read.AzureADGroup",
+                    "Organization.Read.All",
+                    "Policy.Read.All",
+                    "PrivilegedEligibilitySchedule.Read.AzureADGroup"
                 ]
             },
             {
                 "resourceAPIAppId": "00000002-0000-0ff1-ce00-000000000000",
                 "ProductName": "Office 365 Exchange Online",
                 "Permission": [
-                    {
-                        "name": "Exchange.ManageAsApp"
-                    }
+                    "Exchange.ManageAsApp"
                 ]
             },
             {
                 "resourceAPIAppId": "00000003-0000-0ff1-ce00-000000000000",
                 "ProductName": "SharePoint",
                 "Permission": [
-                    {
-                        "name": "Sites.FullControl.All"
-                    }
+                    "Sites.FullControl.All"
                 ]
             }
         ],
     "SCuBAGearRoles": [
-        {
-            "RoleName": "Global Reader"
-        }
+        "Global Reader"
     ],
     "SCuBAGearGraphScopes": [
         {
             "Product": "Container",
             "Permission": [
-                {
-                    "Name": "User.Read"
-                },
-                {
-                    "Name": "Application.Read.All"
-                },
-                {
-                    "Name": "AppRoleAssignment.ReadWrite.All"
-                },
-                {
-                    "Name": "RoleManagement.ReadWrite.Directory"
-                },
-                {
-                    "Name": "EntitlementManagement.ReadWrite.All"
-                }
+                "User.Read",
+                "Application.Read.All",
+                "AppRoleAssignment.ReadWrite.All",
+                "RoleManagement.ReadWrite.Directory",
+                "EntitlementManagement.ReadWrite.All"
             ]
         },
         {
             "Product": "aad",
             "Permission": [
-                {
-                    "Name": "RoleManagementPolicy.Read.AzureADGroup"
-                },
-                {
-                    "Name": "RoleManagement.Read.Directory"
-                },
-                {
-                    "Name": "Directory.Read.All"
-                },
-                {
-                    "Name": "User.Read.All"
-                },
-                {
-                    "Name": "GroupMember.Read.All"
-                },
-                {
-                    "Name": "PrivilegedAccess.Read.AzureADGroup"
-                },
-                {
-                    "Name": "Organization.Read.All"
-                },
-                {
-                    "Name": "Policy.Read.All"
-                },
-                {
-                    "Name": "PrivilegedEligibilitySchedule.Read.AzureADGroup"
-                }
+                "RoleManagementPolicy.Read.AzureADGroup",
+                "RoleManagement.Read.Directory",
+                "Directory.Read.All",
+                "User.Read.All",
+                "GroupMember.Read.All",
+                "PrivilegedAccess.Read.AzureADGroup",
+                "Organization.Read.All",
+                "Policy.Read.All",
+                "PrivilegedEligibilitySchedule.Read.AzureADGroup"
             ]
         },
         {
             "Product": "exo",
             "Permission": [
-                {
-                    "Name": "User.Read.All"
-                }
+                "User.Read.All"
             ]
         }
     ]

@@ -4,141 +4,64 @@
                 "resourceAPIAppId": "00000003-0000-0000-c000-000000000000",
                 "ProductName": "Microsoft Graph",
                 "Permission": [
-                    {
-                        "id": "69e67828-780e-47fd-b28c-7b27d14864e6",
-                        "name": "RoleManagementPolicy.Read.AzureADGroup"
-                    },
-                    {
-                        "id": "483bed4a-2ad3-4361-a73b-c83ccdbdc53c",
-                        "name": "RoleManagement.Read.Directory"
-                    },
-                    {
-                        "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",
-                        "name": "Directory.Read.All"
-                    },
-                    {
-                        "id": "df021288-bdef-4463-88db-98f22de89214",
-                        "name": "User.Read.All"
-                    },
-                    {
-                        "id": "98830695-27a2-44f7-8c18-0c3ebc9698f6",
-                        "name": "GroupMember.Read.All"
-                    },
-                    {
-                        "id": "01e37dc9-c035-40bd-b438-b2879c4870a6",
-                        "name": "PrivilegedAccess.Read.AzureADGroup"
-                    },
-                    {
-                        "id": "498476ce-e0fe-48b0-b801-37ba7e2685c6",
-                        "name": "Organization.Read.All"
-                    },
-                    {
-                        "id": "246dd0d5-5bd0-4def-940b-0421030a5b68",
-                        "name": "Policy.Read.All"
-                    },
-                    {
-                        "id": "edb419d6-7edc-42a3-9345-509bfdf5d87c",
-                        "name": "PrivilegedEligibilitySchedule.Read.AzureADGroup"
-                    }
+                    "RoleManagementPolicy.Read.AzureADGroup",
+                    "RoleManagement.Read.Directory",
+                    "Directory.Read.All",
+                    "User.Read.All",
+                    "GroupMember.Read.All",
+                    "PrivilegedAccess.Read.AzureADGroup",
+                    "Organization.Read.All",
+                    "Policy.Read.All",
+                    "PrivilegedEligibilitySchedule.Read.AzureADGroup"
                 ]
             },
             {
                 "resourceAPIAppId": "00000002-0000-0ff1-ce00-000000000000",
                 "ProductName": "Office 365 Exchange Online",
                 "Permission": [
-                    {
-                        "id": "dc50a0fb-09a3-484d-be87-e023b12c6440",
-                        "name": "Exchange.ManageAsApp"
-                    }
+                    "Exchange.ManageAsApp"
                 ]
             },
             {
                 "resourceAPIAppId": "00000003-0000-0ff1-ce00-000000000000",
                 "ProductName": "SharePoint",
                 "Permission": [
-                    {
-                        "id": "678536fe-1083-478a-9c59-b99265e6b0d3",
-                        "name": "Sites.FullControl.All"
-                    }
+                    "Sites.FullControl.All"
                 ]
             }
         ],
     "SCuBAGearRoles": [
-        {
-            "RoleName": "Global Reader"
-        }
+        "Global Reader"
     ],
     "SCuBAGearGraphScopes": [
         {
             "Product": "Container",
             "Permission": [
-                {
-                    "Name": "RoleManagementPolicy.Read.AzureADGroup"
-                },
-                {
-                    "Name": "RoleManagement.Read.Directory"
-                },
-                {
-                    "Name": "Directory.Read.All"
-                },
-                {
-                    "Name": "User.Read.All"
-                },
-                {
-                    "Name": "GroupMember.Read.All"
-                },
-                {
-                    "Name": "PrivilegedAccess.Read.AzureADGroup"
-                },
-                {
-                    "Name": "Organization.Read.All"
-                },
-                {
-                    "Name": "Policy.Read.All"
-                },
-                {
-                    "Name": "PrivilegedEligibilitySchedule.Read.AzureADGroup"
-                }
+                "User.Read",
+                "Application.Read.All",
+                "AppRoleAssignment.ReadWrite.All",
+                "RoleManagement.ReadWrite.Directory",
+                "EntitlementManagement.ReadWrite.All"
             ]
         },
         {
             "Product": "aad",
             "Permission": [
-                {
-                    "Name": "RoleManagementPolicy.Read.AzureADGroup"
-                },
-                {
-                    "Name": "RoleManagement.Read.Directory"
-                },
-                {
-                    "Name": "Directory.Read.All"
-                },
-                {
-                    "Name": "User.Read.All"
-                },
-                {
-                    "Name": "GroupMember.Read.All"
-                },
-                {
-                    "Name": "PrivilegedAccess.Read.AzureADGroup"
-                },
-                {
-                    "Name": "Organization.Read.All"
-                },
-                {
-                    "Name": "Policy.Read.All"
-                },
-                {
-                    "Name": "PrivilegedEligibilitySchedule.Read.AzureADGroup"
-                }
+                "RoleManagementPolicy.Read.AzureADGroup",
+                "RoleManagement.Read.Directory",
+                "Directory.Read.All",
+                "User.Read.All",
+                "GroupMember.Read.All",
+                "PrivilegedAccess.Read.AzureADGroup",
+                "Organization.Read.All",
+                "Policy.Read.All",
+                "PrivilegedEligibilitySchedule.Read.AzureADGroup"
             ]
         },
         {
             "Product": "exo",
             "Permission": [
-                {
-                    "Name": "User.Read.All"
-                }
+                "User.Read.All"
             ]
         }
     ],
@@ -146,131 +69,91 @@
         {
             "Permission": "Policy.Read.All",
             "cmdlet": [
-                {
-                    "Name": "Get-MgBetaIdentityConditionalAccessPolicy"
-                },
-                {
-                    "Name": "Get-MgBetaPolicyAuthorizationPolicy"
-                }
+                "Get-MgBetaIdentityConditionalAccessPolicy",
+                "Get-MgBetaPolicyAuthorizationPolicy"
             ]
         },
         {
             "Permission": "Organization.Read.All",
             "cmdlet": [
-                {
-                    "Name": "Get-MgBetaSubscribedSku"
-                }
+                "Get-MgBetaSubscribedSku"
             ]
         },
         {
             "Permission": "User.Read.All",
             "cmdlet": [
-                {
-                    "Name": "Get-MgBetaUserCount"
-                },
-                {
-                    "Name": "Get-MgBetaUser"
-                }
+                "Get-MgBetaUserCount",
+                "Get-MgBetaUser"
             ]
         },
         {
             "Permission": "Directory.Read.All",
             "cmdlet": [
-                {
-                    "Name": "Get-MgBetaDirectorySetting"
-                },
-                {
-                    "Name": "Get-MgBetaDirectoryObject"
-                }
+                "Get-MgBetaDirectorySetting",
+                "Get-MgBetaDirectoryObject"
             ]
         },
         {
             "Permission": "Policy.ReadWrite.AuthenticationMethod",
             "cmdlet": [
-                {
-                    "Name": "Get-MgPolicyAuthenticationMethodPolicy"
-                }
+                "Get-MgPolicyAuthenticationMethodPolicy"
             ]
         },
         {
             "Permission": "Domain.Read.All",
             "cmdlet": [
-                {
-                    "Name": "Get-MgBetaDomain"
-                }
+                "Get-MgBetaDomain"
             ]
         },
         {
             "Permission": "RoleEligibilitySchedule.Read.Directory",
             "cmdlet": [
-                {
-                    "Name": "Get-MgRoleManagementDirectoryRoleEligibilityScheduleInstance"
-                }
+                "Get-MgRoleManagementDirectoryRoleEligibilityScheduleInstance"
             ]
         },
         {
             "Permission": "RoleAssignmentSchedule.Read.Directory",
             "cmdlet": [
-                {
-                    "Name": "Get-MgBetaRoleManagementDirectoryRoleAssignmentScheduleInstance"
-                }
+                "Get-MgBetaRoleManagementDirectoryRoleAssignmentScheduleInstance"
             ]
         },
         {
             "Permission": "PrivilegedEligibilitySchedule.Read.AzureADGroup",
             "cmdlet": [
-                {
-                    "Name": "Get-MgBetaIdentityGovernancePrivilegedAccessGroupEligibilityScheduleInstance"
-                }
+                "Get-MgBetaIdentityGovernancePrivilegedAccessGroupEligibilityScheduleInstance"
             ]
         },
         {
             "Permission": "AccessReview.Read.All",
             "cmdlet": [
-                {
-                    "Name": "Get-MgBetaPrivilegedAccessResource"
-                }
+                "Get-MgBetaPrivilegedAccessResource"
             ]
         },
         {
             "Permission": "Organization.Read.All",
             "cmdlet": [
-                {
-                    "Name": "Get-MgBetaOrganization"
-                }
+                "Get-MgBetaOrganization"
             ]
         },
         {
             "Permission": "RoleManagement.Read.Directory",
             "cmdlet": [
-                {
-                    "Name": "Get-MgBetaDirectoryRole"
-                },
-                {
-                    "Name": "Get-MgBetaDirectoryRoleMember"
-                },
-                {
-                    "Name": "Get-MgBetaPolicyRoleManagementPolicyRule"
-                }
+                "Get-MgBetaDirectoryRole",
+                "Get-MgBetaDirectoryRoleMember",
+                "Get-MgBetaPolicyRoleManagementPolicyRule"
             ]
         },
         {
             "Permission": "GroupMember.Read.All",
             "cmdlet": [
-                {
-                    "Name": "Get-MgBetaGroupMember"
-                },
-                {
-                    "Name": "Get-MgBetaGroup"
-                }
+                "Get-MgBetaGroupMember",
+                "Get-MgBetaGroup"
             ]
         },
         {
             "Permission": "RoleManagement.Read.All",
             "cmdlet": [
-                {
-                    "Name": "Get-MgBetaPolicyRoleManagementPolicyAssignment"
-                }
+                "Get-MgBetaPolicyRoleManagementPolicyAssignment"
             ]
         }
     ]

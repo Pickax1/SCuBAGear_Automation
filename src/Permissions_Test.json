@@ -1,6 +1,8 @@
 {
     "SCuBAGearPermissions": [
             {
+                "description": "This section contains the Microsoft Graph Application API permissions that need to added to the Service Principal for Non-Interactive Logons",
+                "url": "https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#service-principal",
                 "resourceAPIAppId": "00000003-0000-0000-c000-000000000000",
                 "ProductName": "Microsoft Graph",
                 "Permission": [
@@ -16,6 +18,8 @@
                 ]
             },
             {
+                "description": "This section contains the Office 365 Exchange Online Application API permissions that you need to add to the Service Principal to facilitate Non-Interactive Logons",
+                "url": "https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#service-principal",
                 "resourceAPIAppId": "00000002-0000-0ff1-ce00-000000000000",
                 "ProductName": "Office 365 Exchange Online",
                 "Permission": [
@@ -23,6 +27,8 @@
                 ]
             },
             {
+                "description": "This section contains the SharePoint Application API permissions that you need to add to the Service Principal to facilitate Non-Interactive Logons",
+                "url": "https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#service-principal",
                 "resourceAPIAppId": "00000003-0000-0ff1-ce00-000000000000",
                 "ProductName": "SharePoint",
                 "Permission": [
@@ -31,10 +37,16 @@
             }
         ],
     "SCuBAGearRoles": [
-        "Global Reader"
+        {
+            "description": "This section contains the roles that you need to add to Service Principal to facilitate Non-Interactive Logons",
+            "roles": [
+                "Global Reader"
+            ]
+        }
     ],
     "SCuBAGearGraphScopes": [
         {
+            "description": "This section contains the needed Microsoft Graph permissions when running Deploy-SCuBATank.ps1",
             "Product": "Container",
             "Permission": [
                 "User.Read",
@@ -45,6 +57,8 @@
             ]
         },
         {
+            "description": "This section contains the needed Microsoft Graph permissions if aad is selected when running SCuBAGear for the ProductName parameter",
+            "url": "https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/interactive.md#application-permissions",
             "Product": "aad",
             "Permission": [
                 "RoleManagementPolicy.Read.AzureADGroup",
@@ -59,7 +73,9 @@
             ]
         },
         {
-            "Product": "exo",
+            "description": "This section contains the needed Microsoft Graph permissions if exo or defender are selected when running SCuBAGear for the ProductName parameter",
+            "url": "https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/interactive.md#application-permissions",
+            "Product": ["exo", "defender"],
             "Permission": [
                 "User.Read.All"
             ]
@@ -67,6 +83,7 @@
     ],
     "GraphCmdLetPermissions": [
         {
+            "description": "This section contains the least Privileged permissions required for each Microsoft Graph cmdlet used in SCuBAGear",
             "Permission": "Policy.Read.All",
             "cmdlet": [
                 "Get-MgBetaIdentityConditionalAccessPolicy",

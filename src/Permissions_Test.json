@@ -1,7 +1,7 @@
 {
     "SCuBAGearPermissions": [
             {
-                "description": "This section contains the Microsoft Graph Application API permissions that need to added to the Service Principal for Non-Interactive Logons",
+                "description": "This section contains the Microsoft Graph Application API permissions that need to be added to the Service Principal for Non-Interactive Logons",
                 "url": "https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#service-principal",
                 "resourceAPIAppId": "00000003-0000-0000-c000-000000000000",
                 "ProductName": "Microsoft Graph",
@@ -18,7 +18,7 @@
                 ]
             },
             {
-                "description": "This section contains the Office 365 Exchange Online Application API permissions that you need to add to the Service Principal to facilitate Non-Interactive Logons",
+                "description": "This section contains the Office 365 Exchange Online Application API permissions that need to be added to the Service Principal for Non-Interactive Logons",
                 "url": "https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#service-principal",
                 "resourceAPIAppId": "00000002-0000-0ff1-ce00-000000000000",
                 "ProductName": "Office 365 Exchange Online",
@@ -27,7 +27,7 @@
                 ]
             },
             {
-                "description": "This section contains the SharePoint Application API permissions that you need to add to the Service Principal to facilitate Non-Interactive Logons",
+                "description": "This section contains the SharePoint Application API permissions that need to be added to the Service Principal for Non-Interactive Logons",
                 "url": "https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#service-principal",
                 "resourceAPIAppId": "00000003-0000-0ff1-ce00-000000000000",
                 "ProductName": "SharePoint",
@@ -38,7 +38,7 @@
         ],
     "SCuBAGearRoles": [
         {
-            "description": "This section contains the roles that you need to add to Service Principal to facilitate Non-Interactive Logons",
+            "description": "This section contains the role that you need to add to the Service Principal for Non-Interactive Logons",
             "roles": [
                 "Global Reader"
             ]
@@ -83,7 +83,7 @@
     ],
     "GraphCmdLetPermissions": [
         {
-            "description": "This section contains the least Privileged permissions required for each Microsoft Graph cmdlet used in SCuBAGear",
+            "description": "This section contains the least Privileged permissions required for each Microsoft Graph cmdlet used in SCuBAGear codebase",
             "Permission": "Policy.Read.All",
             "cmdlet": [
                 "Get-MgBetaIdentityConditionalAccessPolicy",

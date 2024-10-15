@@ -36,12 +36,12 @@
                 ]
             }
         ],
-    "SCuBAGearRoles": [
+    "SCuBAGearRole": [
         {
-            "description": "This section contains the role that you need to add to the Service Principal for Non-Interactive Logons",
-            "roles": [
+            "Role": [
                 "Global Reader"
-            ]
+            ],
+            "description": "This section contains the role that you need to add to the Service Principal for Non-Interactive Logons"
         }
     ],
     "SCuBAGearGraphScopes": [

@@ -1,5 +1,5 @@
 {
-    "SCuBAGearPermissions": [
+    "ScubaGearSPPermissions": [
             {
                 "description": "This section contains the Microsoft Graph Application API permissions that need to be added to the Service Principal for Non-Interactive Logons",
                 "url": "https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/noninteractive.md#service-principal",
@@ -36,17 +36,17 @@
                 ]
             }
         ],
-    "SCuBAGearRole": [
+    "ScubaGearRole": [
         {
+            "description": "This section contains the role that you need to add to the Service Principal for Non-Interactive Logons",
             "Role": [
                 "Global Reader"
-            ],
-            "description": "This section contains the role that you need to add to the Service Principal for Non-Interactive Logons"
+            ]            
         }
     ],
-    "SCuBAGearGraphScopes": [
+    "ScubaGearGraphScopes": [
         {
-            "description": "This section contains the needed Microsoft Graph permissions when running Deploy-SCuBATank.ps1",
+            "description": "This section contains the needed Microsoft Graph permissions when running Deploy-ScubaTank.ps1",
             "Product": "Container",
             "Permission": [
                 "User.Read",
@@ -57,7 +57,7 @@
             ]
         },
         {
-            "description": "This section contains the needed Microsoft Graph permissions if aad is selected when running SCuBAGear for the ProductName parameter",
+            "description": "This section contains the needed Microsoft Graph permissions if aad is selected when running ScubaGear for the ProductName parameter",
             "url": "https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/interactive.md#application-permissions",
             "Product": "aad",
             "Permission": [
@@ -73,7 +73,7 @@
             ]
         },
         {
-            "description": "This section contains the needed Microsoft Graph permissions if exo or defender are selected when running SCuBAGear for the ProductName parameter",
+            "description": "This section contains the needed Microsoft Graph permissions if exo or defender are selected when running ScubaGear for the ProductName parameter",
             "url": "https://github.com/cisagov/ScubaGear/blob/main/docs/prerequisites/interactive.md#application-permissions",
             "Product": ["exo", "defender"],
             "Permission": [
@@ -83,7 +83,7 @@
     ],
     "GraphCmdLetPermissions": [
         {
-            "description": "This section contains the least Privileged permissions required for each Microsoft Graph cmdlet used in SCuBAGear codebase",
+            "description": "This section contains the least Privileged permissions required for each Microsoft Graph cmdlet used in ScubaGear codebase",
             "Permission": "Policy.Read.All",
             "cmdlet": [
                 "Get-MgBetaIdentityConditionalAccessPolicy",

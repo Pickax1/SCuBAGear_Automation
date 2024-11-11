@@ -6,7 +6,6 @@
                 "resourceAPIAppId": "00000003-0000-0000-c000-000000000000",
                 "ProductName": "Microsoft Graph",
                 "Permission": [
-                    "RoleManagementPolicy.Read.AzureADGroup",
                     "RoleManagement.Read.Directory",
                     "Directory.Read.All",
                     "User.Read.All",

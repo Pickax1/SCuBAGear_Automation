@@ -51,8 +51,7 @@
                 "User.Read",
                 "Application.Read.All",
                 "AppRoleAssignment.ReadWrite.All",
-                "RoleManagement.ReadWrite.Directory",
-                "EntitlementManagement.ReadWrite.All"
+                "RoleManagement.ReadWrite.Directory"
             ]
         },
         {

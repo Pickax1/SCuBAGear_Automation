@@ -80,6 +80,8 @@ $store2.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrit
 $store2.Add($pfxCert)
 $store2.Close()
 
+Start-Sleep 3600
+
 $FilePath = 'C:\Program Files\PowerShell\7\pwsh.exe'
 if($FilePath){
     Start-Process -FilePath $FilePath -ArgumentList "-file", "C:\Run_SCuBA.ps1" -Wait

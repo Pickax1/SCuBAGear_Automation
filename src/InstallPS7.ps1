@@ -24,8 +24,11 @@ $VaultName = $ENV:VaultName
 $CertName = $ENV:CertName
 
 # Retrieve an Access Token
-$identityEndpoint = $env:IDENTITY_ENDPOINT
-$identityHeader = $env:IDENTITY_HEADER
+if($ENV:PrivateEndpoints -and $env:IDENTITY_ENDPOINT -like "http://10.92.0.*:2377/metadata/identity/oauth2/token?api-version=1.0"){
+    $identityEndpoint = " http://169.254.128.1:2377/metadata/identity/oauth2/token?api-version=1.0"
+}else{
+    $identityEndpoint = $env:IDENTITY_ENDPOINT
+}
 $principalId = $ENV:MIPrincipalID
 $Environment = $ENV:TenantLocation
 
@@ -70,10 +73,10 @@ $pfxCert = New-Object System.Security.Cryptography.X509Certificates.X509Certific
 $pfxCert.Import($pfxBytes, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::DefaultKeySet)
 
 # Import the certificate into the specified certificate store
-$store1 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "LocalMachine")
-$store1.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-$store1.Add($pfxCert)
-$store1.Close()
+#$store1 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "LocalMachine")
+#$store1.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+#$store1.Add($pfxCert)
+#$store1.Close()
 
 $store2 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "CurrentUser")
 $store2.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)

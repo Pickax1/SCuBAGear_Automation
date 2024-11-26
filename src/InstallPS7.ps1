@@ -29,6 +29,7 @@ if($ENV:PrivateEndpoints -and $env:IDENTITY_ENDPOINT -like "http://10.92.0.*:237
 }else{
     $identityEndpoint = $env:IDENTITY_ENDPOINT
 }
+#$identityHeader = $env:IDENTITY_HEADER
 $principalId = $ENV:MIPrincipalID
 $Environment = $ENV:TenantLocation
 
@@ -82,8 +83,6 @@ $store2 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My
 $store2.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
 $store2.Add($pfxCert)
 $store2.Close()
-
-#Start-Sleep 3600
 
 $FilePath = 'C:\Program Files\PowerShell\7\pwsh.exe'
 if($FilePath){

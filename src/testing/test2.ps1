@@ -25,7 +25,7 @@ Try{
 
 # Define some variables for Graph connection and writing to the storage account
 $CertName = 'CN=' + $ENV:CertName
-$CertificateThumbprint = (Get-ChildItem -Path 'Cert:\LocalMachine\My' | Where-Object { $_.Subject -eq $CertName }).Thumbprint
+$CertificateThumbprint = (Get-ChildItem -Path 'Cert:\CurrentUser\My' | Where-Object { $_.Subject -eq $CertName }).Thumbprint
 $Date= Get-Date -Format FileDateTime
 $Environment = $ENV:TenantLocation
 $TenantID = $ENV:TenantID
@@ -62,7 +62,6 @@ function Invoke-StorageTransfer {
         Write-Output "Service Principal Connected to Azure for writing result to Storage Account"
         $OutPutContainerName = "scuba-$TenantID-$Date".ToLower()
         $Report = (Get-ChildItem -Path "C:\" -Filter "M365Baseline*" | Sort-Object -Descending -Property LastWriteTime | select-object -First 1).Name
-        #$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
         
         Try{
             $StorageContainer = New-AzStorageContainer -Name $OutPutContainerName -Context $ctx
@@ -102,7 +101,6 @@ Function Start-SCuBA {
         Organization = $Org
         M365Environment = $Environment
         Quiet = $True
-        MergeJson = $True
     }
     Invoke-ScuBA @SCuBAParams
 
@@ -128,13 +126,18 @@ $StorageDate = $MostRecentinStorage.LastModified.UtcDateTime
 $StorageDate = $StorageDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
 
 # Compare the versions and update the blob if necessary
-if ($GitHubDate -gt $StorageDate) {
+$StorageModuleVersion = $MostRecentinStorage.Name.Split('-')[-1] -replace '.zip',''
+$GitHubModuleVersion  = $ZipName.Split('-')[-1] -replace '.zip',''
+if ($GitHubDate -gt $StorageDate -or $StorageModuleVersion -le $GitHubModuleVersion) {
     # Download the latest release from GitHub
     $LocalPath = "C:\$ZipName"
     Invoke-WebRequest -Uri $latestReleaseUrl -OutFile $LocalPath
 
-    # Overwrite the file in Azure Storage
+    # Add latest SCuBAGear module to Azure Storage
     Set-AzStorageBlobContent -File $localPath -Container $containerName -Blob $ZipName -Context $ctx
+
+    # Remove older version of the SCuBAGear module from Azure Storage
+    Remove-AzStorageBlob -Container $containerName -Blob $MostRecentinStorage.Name -Context $ctx
 
     Write-Output "The file in Azure Storage has been updated with the latest version from GitHub."
 

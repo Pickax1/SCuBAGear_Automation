@@ -143,6 +143,8 @@ if ($StorageModuleVersion -eq $GitHubModuleVersion) {
     # Extract the ZIP file
     Expand-Archive -Path $destinationPath -DestinationPath "C:\" -Force
 
+    $StartPath = $ZipName.Replace('.zip','')
+
 } else {
     Write-Output "The file in Azure Storage is already up-to-date."
     $LocalPath = "C:\$($MostRecentinStorage.Name)"
@@ -153,7 +155,7 @@ if ($StorageModuleVersion -eq $GitHubModuleVersion) {
 }
 
 Write-Output "Importing SCuBAGear Module...."
-$StartPath = $ZipName.Replace('.zip','')
+$StartPath = $MostRecentinStorage.Name.Replace('.zip','')
 $modulePath = "C:\$StartPath\PowerShell\ScubaGear\ScubaGear.psd1"
 Import-Module -Name $modulePath
 

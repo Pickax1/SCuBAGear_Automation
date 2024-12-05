@@ -133,10 +133,10 @@ if ($StorageModuleVersion -le $GitHubModuleVersion) {
     Invoke-WebRequest -Uri $latestReleaseUrl -OutFile $LocalPath
 
     # Add latest SCuBAGear module to Azure Storage
-    Set-AzStorageBlobContent -File $localPath -Container $containerName -Blob $ZipName -Context $ctx
+    Set-AzStorageBlobContent -File $localPath -Container $containerName -Blob $ZipName -Context $ctx -Force -Confirm:$false
 
     # Remove older version of the SCuBAGear module from Azure Storage
-    Remove-AzStorageBlob -Container $containerName -Blob $MostRecentinStorage.Name -Context $ctx
+    Remove-AzStorageBlob -Container $containerName -Blob $MostRecentinStorage.Name -Context $ctx -Force -Confirm:$False
 
     Write-Output "The file in Azure Storage has been updated with the latest version from GitHub."
 

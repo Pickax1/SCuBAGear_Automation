@@ -29,7 +29,7 @@ if($ENV:PrivateEndpoints -eq 'Yes' -and $env:IDENTITY_ENDPOINT -like "http://10.
 }else{
     $identityEndpoint = $env:IDENTITY_ENDPOINT
 }
-#$identityHeader = $env:IDENTITY_HEADER
+$identityHeader = $env:IDENTITY_HEADER
 $principalId = $ENV:MIPrincipalID
 $Environment = $ENV:TenantLocation
 

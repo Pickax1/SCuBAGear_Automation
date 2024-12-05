@@ -74,10 +74,10 @@ $pfxCert = New-Object System.Security.Cryptography.X509Certificates.X509Certific
 $pfxCert.Import($pfxBytes, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::DefaultKeySet)
 
 # Import the certificate into the specified certificate store
-#$store1 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "LocalMachine")
-#$store1.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-#$store1.Add($pfxCert)
-#$store1.Close()
+$store1 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "LocalMachine")
+$store1.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+$store1.Add($pfxCert)
+$store1.Close()
 
 $store2 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "CurrentUser")
 $store2.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)

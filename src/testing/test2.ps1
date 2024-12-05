@@ -127,7 +127,7 @@ $MostRecentinStorage = (Get-AzStorageBlob -Container $containerName -Context $ct
 # Compare the versions and update the blob if necessary
 $StorageModuleVersion = $MostRecentinStorage.Name.Split('-')[-1] -replace '.zip',''
 $GitHubModuleVersion  = $ZipName.Split('-')[-1] -replace '.zip',''
-if ($StorageModuleVersion -le $GitHubModuleVersion) {
+if ($StorageModuleVersion -eq $GitHubModuleVersion) {
     # Download the latest release from GitHub
     $LocalPath = "C:\$ZipName"
     Invoke-WebRequest -Uri $latestReleaseUrl -OutFile $LocalPath

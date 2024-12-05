@@ -117,18 +117,17 @@ $githubApiUrl = "https://api.github.com/repos/cisagov/ScubaGear/releases/latest"
 $githubResponse = Invoke-RestMethod -Uri $githubApiUrl
 $latestReleaseUrl = ($githubResponse.assets | Where-Object { $_.name -like "ScubaGear*.zip" }).browser_download_url
 $ZipName = $githubResponse.Assets.name
-$GitHubDate = $githubResponse.created_at
+#$GitHubDate = $githubResponse.created_at
 $destinationPath = "C:\$ZipName"
 
 # Get the current version stored in Azure Storage
 $MostRecentinStorage = (Get-AzStorageBlob -Container $containerName -Context $ctx | Where-Object {$_.Name -like "ScuBAGear-*.zip"}  | Sort-Object -Descending LastModified)
-$StorageDate = $MostRecentinStorage.LastModified.UtcDateTime
-$StorageDate = $StorageDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
+#$StorageDate = $MostRecentinStorage.LastModified.UtcDateTime
 
 # Compare the versions and update the blob if necessary
 $StorageModuleVersion = $MostRecentinStorage.Name.Split('-')[-1] -replace '.zip',''
 $GitHubModuleVersion  = $ZipName.Split('-')[-1] -replace '.zip',''
-if ($GitHubDate -gt $StorageDate -or $StorageModuleVersion -le $GitHubModuleVersion) {
+if ($StorageModuleVersion -le $GitHubModuleVersion) {
     # Download the latest release from GitHub
     $LocalPath = "C:\$ZipName"
     Invoke-WebRequest -Uri $latestReleaseUrl -OutFile $LocalPath

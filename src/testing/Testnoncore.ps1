@@ -227,8 +227,11 @@ Import-Module -Name $modulePath
 Write-Output "Initializing SCuBAGear (This can take awhile)...."
 
 # Download OPA since BITS can't be used.
+$ProgressPreference = 'SilentlyContinue' # Speed up the download
 Invoke-WebRequest -Uri 'https://openpolicyagent.org/downloads/v0.69.0/opa_windows_amd64.exe' -OutFile c:\opa_windows_amd64.exe -UseBasicParsing
+mkdir C:\.scubagear\Tools
+copy-item C:\opa_windows_amd64.exe C:\.scubagear\Tools
 
-Initialize-SCuBA -ScubaParentDirectory C:\ -OPAExe C:\opa_windows_amd64.exe 
+Initialize-SCuBA -ScubaParentDirectory C:\ -NoOPA
 
 Start-SCuBA

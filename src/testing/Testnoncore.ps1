@@ -225,6 +225,10 @@ Import-Module -Name $modulePath
 
 # This will check for depencies and latest versions
 Write-Output "Initializing SCuBAGear (This can take awhile)...."
-Initialize-SCuBA -ScubaParentDirectory C:\
+
+# Download OPA since BITS can't be used.
+Invoke-WebRequest -Uri 'https://openpolicyagent.org/downloads/v0.69.0/opa_windows_amd64.exe' -OutFile c:\opa_windows_amd64.exe -UseBasicParsing
+
+Initialize-SCuBA -ScubaParentDirectory C:\ -OPAExe C:\opa_windows_amd64.exe 
 
 Start-SCuBA

@@ -1,4 +1,3 @@
-<#
 $VaultName = $ENV:VaultName
 $CertName = $ENV:CertName
 
@@ -118,7 +117,7 @@ Function Start-ResourceConnection {
 
 Start-ResourceConnection
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
-
+<##>
 function Invoke-StorageTransfer {
     Try{
         Write-Output "Service Principal Connected to Azure for writing result to Storage Account"
@@ -156,6 +155,7 @@ Function Start-SCuBA {
     Write-Output "Running SCuBAGear Checks...."
 
     if((Test-Path "C:\ScubaGearConfig.yaml" -ErrorAction 0)){
+        Write-Output "Configuration file found."
         Invoke-Scuba -ConfigFilePath $ConfigFilePath
     }else{
         Write-Output "No Configuration file found."
@@ -171,9 +171,6 @@ Function Start-SCuBA {
         }
         Invoke-ScuBA @SCuBAParams
     }
-
-    Write-Output "Transferring SCuBAGear results to storage"
-    Invoke-StorageTransfer
 }
 
 # Download SCuBAGear Module from Storage Account
@@ -251,4 +248,6 @@ copy-item C:\opa_windows_amd64.exe C:\.scubagear\Tools
 Initialize-SCuBA -ScubaParentDirectory C:\ -NoOPA
 
 Start-SCuBA
-#>
+
+Write-Output "Transferring SCuBAGear results to storage"
+Invoke-StorageTransfer

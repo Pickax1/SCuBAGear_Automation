@@ -1,3 +1,4 @@
+<#
 $VaultName = $ENV:VaultName
 $CertName = $ENV:CertName
 
@@ -250,3 +251,4 @@ copy-item C:\opa_windows_amd64.exe C:\.scubagear\Tools
 Initialize-SCuBA -ScubaParentDirectory C:\ -NoOPA
 
 Start-SCuBA
+#>

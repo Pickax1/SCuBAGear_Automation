@@ -150,28 +150,6 @@ function Invoke-StorageTransfer {
         Write-Output "Unable to create blob container"
     }
 }
-Function Start-SCuBA {
-
-    Write-Output "Running SCuBAGear Checks...."
-
-    if((Test-Path "C:\ScubaGearConfig.yaml" -ErrorAction 0)){
-        Write-Output "Configuration file found."
-        Invoke-Scuba -ConfigFilePath $ConfigFilePath
-    }else{
-        Write-Output "No Configuration file found."
-        $SCuBAParams = @{
-            ProductNames = '*'
-            OPAPath = 'C:\.scubagear\tools\'
-            OutPath = 'C:\'
-            CertificateThumbprint = $CertificateThumbprint
-            AppId = $ClientID
-            Organization = $Org
-            M365Environment = $Environment
-            Quiet = $True
-        }
-        Invoke-ScuBA @SCuBAParams
-    }
-}
 
 # Download SCuBAGear Module from Storage Account
 $containerName = $ENV:ContainerName
@@ -247,7 +225,25 @@ copy-item C:\opa_windows_amd64.exe C:\.scubagear\Tools
 
 Initialize-SCuBA -ScubaParentDirectory C:\ -NoOPA
 
-Start-SCuBA
+Write-Output "Running SCuBAGear Checks...."
+
+if((Test-Path "C:\ScubaGearConfig.yaml" -ErrorAction 0)){
+    Write-Output "Configuration file found."
+    Invoke-Scuba -ConfigFilePath $ConfigFilePath
+}else{
+    Write-Output "No Configuration file found."
+    $SCuBAParams = @{
+        ProductNames = '*'
+        OPAPath = 'C:\.scubagear\tools\'
+        OutPath = 'C:\'
+        CertificateThumbprint = $CertificateThumbprint
+        AppId = $ClientID
+        Organization = $Org
+        M365Environment = $Environment
+        Quiet = $True
+    }
+    Invoke-ScuBA @SCuBAParams
+}
 
 Write-Output "Transferring SCuBAGear results to storage"
 Invoke-StorageTransfer

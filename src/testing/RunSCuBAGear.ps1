@@ -1,4 +1,3 @@
-<#
 $VaultName = $ENV:VaultName
 $CertName = $ENV:CertName
 
@@ -28,20 +27,18 @@ switch ($Environment) {
 }
 
 $uri = $identityEndpoint + '&resource=' + $RawVaultURL + '&principalId=' + $principalId
-$headers = @{    
-    secret = $identityHeader    
+$headers = @{
+    secret = $identityHeader
     "Content-Type" = "application/x-www-form-urlencoded"
 }
 $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
 
 # Access values from Key Vault with token
 $accessToken = $Response.access_token
-$headers2 = @{ 
+$headers2 = @{
     Authorization = "Bearer $accessToken"
 }
-#$PassName = 'Pass'
-#$Password = (Invoke-RestMethod -Uri "$($VaultURL)/Secrets/$($PassName)/?api-version=7.4" -Headers $headers2).Value
-#$SS = ConvertTo-SecureString $Password -AsPlainText -Force
+
 $PrivKey = (Invoke-RestMethod -Uri "$($VaultURL)/Secrets/$($CertName)/?api-version=7.4" -Headers $headers2).Value
 
 # Decode the Base64 string
@@ -49,7 +46,6 @@ $pfxBytes = [Convert]::FromBase64String($PrivKey)
 
 # Create an X509Certificate2 object from the PFX bytes
 $pfxCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
-#$pfxCert.Import($pfxBytes, $SS, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
 $pfxCert.Import($pfxBytes, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::DefaultKeySet)
 
 # Import the certificate into the specified certificate store
@@ -114,7 +110,7 @@ switch ($Environment.ToLower().Trim()) {
 }
 
 Function Start-ResourceConnection {
-    # Connect to Azure and Graph using the service principal and certficate thumbprint
+    # Connect to Azure and Graph using the service principal and certificate thumbprint
     Write-Output "Connecting to Azure"
     Connect-Azaccount -ServicePrincipal -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID -Environment $AzureEnvironment
 }
@@ -127,14 +123,14 @@ function Invoke-StorageTransfer {
         Write-Output "Service Principal Connected to Azure for writing result to Storage Account"
         $OutPutContainerName = "scuba-$TenantID-$Date".ToLower()
         $Report = (Get-ChildItem -Path "C:\" -Filter "M365Baseline*" | Sort-Object -Descending -Property LastWriteTime | select-object -First 1).Name
-        
+
         Try{
             $StorageContainer = New-AzStorageContainer -Name $OutPutContainerName -Context $ctx
             Write-Output "New Azure Blob Container Created for SCuBAGear Results - $OutPutContainerName"
         }Catch{
             Write-Output"Azure Blob Container Exists"
         }
-        
+
         Try{
             if($Report -ne $Null){
                 $Items = Get-ChildItem -Path "C:\$Report" -Recurse | Set-AzStorageBlobContent -Container $OutPutContainerName -Context $ctx -WarningAction SilentlyContinue
@@ -157,21 +153,26 @@ function Invoke-StorageTransfer {
 Function Start-SCuBA {
 
     Write-Output "Running SCuBAGear Checks...."
-    $SCuBAParams = @{
-        ProductNames = '*'
-        OPAPath = 'C:\.scubagear\tools\'
-        OutPath = 'C:\'
-        CertificateThumbprint = $CertificateThumbprint
-        AppId = $ClientID
-        Organization = $Org
-        M365Environment = $Environment
-        Quiet = $True
+
+    if((Test-Path "C:\ScubaGearConfig.yaml" -ErrorAction 0)){
+        Invoke-Scuba -ConfigFilePath $ConfigFilePath
+    }else{
+        Write-Output "No Configuration file found."
+        $SCuBAParams = @{
+            ProductNames = '*'
+            OPAPath = 'C:\.scubagear\tools\'
+            OutPath = 'C:\'
+            CertificateThumbprint = $CertificateThumbprint
+            AppId = $ClientID
+            Organization = $Org
+            M365Environment = $Environment
+            Quiet = $True
+        }
+        Invoke-ScuBA @SCuBAParams
     }
-    Invoke-ScuBA @SCuBAParams
 
     Write-Output "Transferring SCuBAGear results to storage"
     Invoke-StorageTransfer
-
 }
 
 # Download SCuBAGear Module from Storage Account
@@ -186,8 +187,21 @@ $ZipName = $githubResponse.Assets.name
 $destinationPath = "C:\$ZipName"
 
 # Get the current version stored in Azure Storage
-$MostRecentinStorage = (Get-AzStorageBlob -Container $containerName -Context $ctx | Where-Object {$_.Name -like "ScuBAGear-*.zip"}  | Sort-Object -Descending LastModified)
-#$StorageDate = $MostRecentinStorage.LastModified.UtcDateTime
+$StorageItems = Get-AzStorageBlob -Container $containerName -Context $ctx
+$MostRecentinStorage = ($StorageItems | Where-Object {$_.Name -like "ScuBAGear-*.zip"}  | Sort-Object -Descending LastModified)
+$ConfiginStorage = $StorageItems | Where-Object {$_.Name -eq "ScubaGearConfig.yaml"}
+
+# Save configuration file to local disk
+$ConfigFilePath = "C:\ScubaGearConfig.yaml"
+Get-AzStorageBlobContent -Container $containerName -Blob $ConfiginStorage.Name -Destination $ConfigFilePath -Context $ctx
+
+# Replace ScubaGear config file with variables from container
+$ConfigFileContents = Get-Content $ConfigFilePath
+$ConfigFileContents = $ConfigFileContents -replace '\${CertificateThumbprint}', $CertificateThumbprint
+$ConfigFileContents = $ConfigFileContents -replace '\${ClientId}', $ClientID
+$ConfigFileContents = $ConfigFileContents -replace '\${Org}', $Org
+$ConfigFileContents = $ConfigFileContents -replace '\${Environment}', $Environment
+$ConfigFileContents | Set-Content $ConfigFilePath
 
 # Compare the versions and update the blob if necessary
 $StorageModuleVersion = $MostRecentinStorage.Name.Split('-')[-1] -replace '.zip',''
@@ -234,5 +248,5 @@ mkdir C:\.scubagear\Tools
 copy-item C:\opa_windows_amd64.exe C:\.scubagear\Tools
 
 Initialize-SCuBA -ScubaParentDirectory C:\ -NoOPA
-#>
+
 Start-SCuBA

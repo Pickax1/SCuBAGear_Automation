@@ -1,3 +1,4 @@
+<#
 $VaultName = $ENV:VaultName
 $CertName = $ENV:CertName
 
@@ -247,3 +248,4 @@ if((Test-Path "C:\ScubaGearConfig.yaml" -ErrorAction 0)){
 
 Write-Output "Transferring SCuBAGear results to storage"
 Invoke-StorageTransfer
+>#

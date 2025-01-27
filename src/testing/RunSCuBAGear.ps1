@@ -49,15 +49,15 @@ $pfxCert = New-Object System.Security.Cryptography.X509Certificates.X509Certific
 $pfxCert.Import($pfxBytes, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::DefaultKeySet)
 
 # Import the certificate into the specified certificate store
-$store1 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "LocalMachine")
-$store1.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-$store1.Add($pfxCert)
-$store1.Close()
+#$store1 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "LocalMachine")
+#$store1.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+#$store1.Add($pfxCert)
+#$store1.Close()
 
-#$store2 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "CurrentUser")
-#$store2.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-#$store2.Add($pfxCert)
-#$store2.Close()
+$store2 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "CurrentUser")
+$store2.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+$store2.Add($pfxCert)
+$store2.Close()
 
 if((Get-PackageProvider -Name 'NuGet' -ListAvailable -Erroraction SilentlyContinue)){
     # NuGet is installed
@@ -86,7 +86,7 @@ Try{
 
 # Define some variables for Graph connection and writing to the storage account
 $CertName = 'CN=' + $ENV:CertName
-$CertificateThumbprint = (Get-ChildItem -Path 'Cert:\LocalMachine\My' | Where-Object { $_.Subject -eq $CertName }).Thumbprint
+$CertificateThumbprint = (Get-ChildItem -Path 'Cert:\CurrentUser\My' | Where-Object { $_.Subject -eq $CertName }).Thumbprint
 $Date= Get-Date -Format FileDateTime
 $Environment = $ENV:TenantLocation
 $TenantID = $ENV:TenantID

@@ -59,7 +59,7 @@ $store1.Close()
 #$store2.Add($pfxCert)
 #$store2.Close()
 
-if((Get-PackageProvider -Name 'NuGet' -ListAvailable)){
+if((Get-PackageProvider -Name 'NuGet' -ListAvailable -Erroraction SilentlyContinue)){
     # NuGet is installed
     Write-Output "NuGet provider is installed...."
 }Else{
@@ -69,7 +69,7 @@ if((Get-PackageProvider -Name 'NuGet' -ListAvailable)){
 }
 
 Try{
-    if((Get-Module -ListAvailable az.accounts,az.storage).Count -eq '2')
+    if((Get-Module -ListAvailable az.accounts,az.storage -Erroraction SilentlyContinue).Count -eq '2')
     {
         Write-Output "Importing Az.Accounts and Az.Storage Modules...."
         Import-Module -Name az.accounts,az.storage -Force -WarningAction SilentlyContinue

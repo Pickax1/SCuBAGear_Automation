@@ -1,4 +1,3 @@
-<#
 $VaultName = $ENV:VaultName
 $CertName = $ENV:CertName
 
@@ -55,10 +54,10 @@ $store1.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrit
 $store1.Add($pfxCert)
 $store1.Close()
 
-$store2 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "CurrentUser")
-$store2.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-$store2.Add($pfxCert)
-$store2.Close()
+#$store2 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "CurrentUser")
+#$store2.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
+#$store2.Add($pfxCert)
+#$store2.Close()
 
 if((Get-PackageProvider -Name 'NuGet' -ListAvailable)){
     # NuGet is installed
@@ -248,4 +247,3 @@ if((Test-Path "C:\ScubaGearConfig.yaml" -ErrorAction 0)){
 
 Write-Output "Transferring SCuBAGear results to storage"
 Invoke-StorageTransfer
->#

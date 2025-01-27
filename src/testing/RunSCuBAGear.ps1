@@ -242,7 +242,7 @@ if((Test-Path "C:\ScubaGearConfig.yaml" -ErrorAction 0)){
         M365Environment = $Environment
         Quiet = $True
     }
-    Invoke-ScuBA @SCuBAParams
+    Invoke-ScuBA @SCuBAParams -WarningAction SilentlyContinue
 }
 
 Write-Output "Transferring SCuBAGear results to storage"

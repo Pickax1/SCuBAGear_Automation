@@ -48,12 +48,6 @@ $pfxBytes = [Convert]::FromBase64String($PrivKey)
 $pfxCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
 $pfxCert.Import($pfxBytes, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::DefaultKeySet)
 
-# Import the certificate into the specified certificate store
-#$store1 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "LocalMachine")
-#$store1.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-#$store1.Add($pfxCert)
-#$store1.Close()
-
 $store2 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "CurrentUser")
 $store2.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
 $store2.Add($pfxCert)
@@ -65,20 +59,20 @@ if((Get-PackageProvider -Name 'NuGet' -ListAvailable -Erroraction SilentlyContin
 }Else{
     # NuGet wasn't installed, installing now
     Write-Output "Installing NuGet provider...."
-    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Confirm:$False
+    $nuget = Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Confirm:$False
 }
 
 Try{
     if((Get-Module -ListAvailable az.accounts,az.storage -Erroraction SilentlyContinue).Count -eq '2')
     {
         Write-Output "Importing Az.Accounts and Az.Storage Modules...."
-        Import-Module -Name az.accounts,az.storage -Force -WarningAction SilentlyContinue
+        $moduleImport = Import-Module -Name az.accounts,az.storage -Force -WarningAction SilentlyContinue
     }else{
-        # Install and import SCuBAGear module if not already installed and loaded
+        # Install and import ScubaGear module if not already installed and loaded
         Write-Output "Installing Az.Accounts and Az.Storage Modules...."
-        Install-Module az.accounts,az.storage -Force -Confirm:$False -WarningAction SilentlyContinue
+        $moduleImport = Install-Module az.accounts,az.storage -Force -Confirm:$False -WarningAction SilentlyContinue
         Write-Output "Importing Az.Accounts and Az.Storage Modules...."
-        Import-Module az.accounts,az.storage -Force -WarningAction SilentlyContinue
+        $moduleImport = Import-Module az.accounts,az.storage -Force -WarningAction SilentlyContinue
     }
 }Catch{
     Write-Error -Message $_.Exception
@@ -87,7 +81,7 @@ Try{
 # Define some variables for Graph connection and writing to the storage account
 $CertName = 'CN=' + $ENV:CertName
 $CertificateThumbprint = (Get-ChildItem -Path 'Cert:\CurrentUser\My' | Where-Object { $_.Subject -eq $CertName }).Thumbprint
-$Date= Get-Date -Format FileDateTime
+$Date = Get-Date -Format FileDateTime
 $Environment = $ENV:TenantLocation
 $TenantID = $ENV:TenantID
 $ClientID = $ENV:ClientID
@@ -112,12 +106,12 @@ switch ($Environment.ToLower().Trim()) {
 Function Start-ResourceConnection {
     # Connect to Azure and Graph using the service principal and certificate thumbprint
     Write-Output "Connecting to Azure"
-    Connect-Azaccount -ServicePrincipal -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID -Environment $AzureEnvironment
+    $azConnect = Connect-Azaccount -ServicePrincipal -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID -Environment $AzureEnvironment
 }
 
 Start-ResourceConnection
 $ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
-<##>
+
 function Invoke-StorageTransfer {
     Try{
         Write-Output "Service Principal Connected to Azure for writing result to Storage Account"
@@ -126,13 +120,13 @@ function Invoke-StorageTransfer {
 
         Try{
             $StorageContainer = New-AzStorageContainer -Name $OutPutContainerName -Context $ctx
-            Write-Output "New Azure Blob Container Created for SCuBAGear Results - $OutPutContainerName"
+            Write-Output "New Azure Blob Container Created for ScubaGear Results - $OutPutContainerName"
         }Catch{
             Write-Output"Azure Blob Container Exists"
         }
 
         Try{
-            if($Report -ne $Null){
+            if($Null -ne $Report){
                 $Items = Get-ChildItem -Path "C:\$Report" -Recurse | Set-AzStorageBlobContent -Container $OutPutContainerName -Context $ctx -WarningAction SilentlyContinue
                 Write-Output "The below items have been Uploaded to Azure Blob Storage"
 
@@ -151,7 +145,7 @@ function Invoke-StorageTransfer {
     }
 }
 
-# Download SCuBAGear Module from Storage Account
+# Download ScubaGear Module from Storage Account
 $containerName = $ENV:ContainerName
 
 # Get the latest release information from GitHub
@@ -164,12 +158,12 @@ $destinationPath = "C:\$ZipName"
 
 # Get the current version stored in Azure Storage
 $StorageItems = Get-AzStorageBlob -Container $containerName -Context $ctx
-$MostRecentinStorage = ($StorageItems | Where-Object {$_.Name -like "ScuBAGear-*.zip"}  | Sort-Object -Descending LastModified)
+$MostRecentinStorage = ($StorageItems | Where-Object {$_.Name -like "ScubaGear-*.zip"}  | Sort-Object -Descending LastModified)
 $ConfiginStorage = $StorageItems | Where-Object {$_.Name -eq "ScubaGearConfig.yaml"}
 
 # Save configuration file to local disk
 $ConfigFilePath = "C:\ScubaGearConfig.yaml"
-Get-AzStorageBlobContent -Container $containerName -Blob $ConfiginStorage.Name -Destination $ConfigFilePath -Context $ctx
+$GetConfig = Get-AzStorageBlobContent -Container $containerName -Blob $ConfiginStorage.Name -Destination $ConfigFilePath -Context $ctx
 
 # Replace ScubaGear config file with variables from container
 $ConfigFileContents = Get-Content $ConfigFilePath
@@ -187,11 +181,16 @@ if ($StorageModuleVersion -lt $GitHubModuleVersion) {
     $LocalPath = "C:\$ZipName"
     Invoke-WebRequest -Uri $latestReleaseUrl -OutFile $LocalPath
 
-    # Add latest SCuBAGear module to Azure Storage
+    # Add latest ScubaGear module to Azure Storage
     Set-AzStorageBlobContent -File $localPath -Container $containerName -Blob $ZipName -Context $ctx -Force -Confirm:$false
 
-    # Remove older version of the SCuBAGear module from Azure Storage
-    Remove-AzStorageBlob -Container $containerName -Blob $MostRecentinStorage.Name -Context $ctx -Force -Confirm:$False
+    if($null -eq $StorageModuleVersion){
+        Write-Output "No previous version of ScubaGear found in Azure Storage."
+    }else{
+        # Remove older version of the ScubaGear module from Azure Storage
+        Write-Output "Removing older version of ScubaGear from Azure Storage."
+        $removeOld = Remove-AzStorageBlob -Container $containerName -Blob $MostRecentinStorage.Name -Context $ctx -Force -Confirm:$False
+    }
 
     Write-Output "The file in Azure Storage has been updated with the latest version from GitHub."
 
@@ -209,23 +208,23 @@ if ($StorageModuleVersion -lt $GitHubModuleVersion) {
     Expand-Archive -Path $LocalPath -DestinationPath "C:\" -Force
 }
 
-Write-Output "Importing SCuBAGear Module...."
+Write-Output "Importing ScubaGear Module...."
 $StartPath = $MostRecentinStorage.Name.Replace('.zip','')
 $modulePath = "C:\$StartPath\PowerShell\ScubaGear\ScubaGear.psd1"
 Import-Module -Name $modulePath
 
 # This will check for depencies and latest versions
-Write-Output "Initializing SCuBAGear (This can take awhile)...."
+Write-Output "Initializing ScubaGear (This can take awhile)...."
 
 # Download OPA since BITS can't be used.
 $ProgressPreference = 'SilentlyContinue' # Speed up the download
 Invoke-WebRequest -Uri 'https://openpolicyagent.org/downloads/v0.69.0/opa_windows_amd64.exe' -OutFile c:\opa_windows_amd64.exe -UseBasicParsing
-mkdir C:\.scubagear\Tools
-copy-item C:\opa_windows_amd64.exe C:\.scubagear\Tools
+mkdir C:\.ScubaGear\Tools
+copy-item C:\opa_windows_amd64.exe C:\.ScubaGear\Tools
 
 Initialize-SCuBA -ScubaParentDirectory C:\ -NoOPA
 
-Write-Output "Running SCuBAGear Checks...."
+Write-Output "Running ScubaGear Checks...."
 
 if((Test-Path "C:\ScubaGearConfig.yaml" -ErrorAction 0)){
     Write-Output "Configuration file found."
@@ -234,7 +233,7 @@ if((Test-Path "C:\ScubaGearConfig.yaml" -ErrorAction 0)){
     Write-Output "No Configuration file found."
     $SCuBAParams = @{
         ProductNames = '*'
-        OPAPath = 'C:\.scubagear\tools\'
+        OPAPath = 'C:\.ScubaGear\tools\'
         OutPath = 'C:\'
         CertificateThumbprint = $CertificateThumbprint
         AppId = $ClientID
@@ -245,5 +244,5 @@ if((Test-Path "C:\ScubaGearConfig.yaml" -ErrorAction 0)){
     Invoke-ScuBA @SCuBAParams
 }
 
-Write-Output "Transferring SCuBAGear results to storage"
+Write-Output "Transferring ScubaGear results to storage"
 Invoke-StorageTransfer

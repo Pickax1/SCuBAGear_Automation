@@ -2,9 +2,9 @@ $VaultName = $ENV:VaultName
 $CertName = $ENV:CertName
 
 # Retrieve an Access Token
-if($ENV:PrivateEndpoints -eq 'Yes' -and $env:IDENTITY_ENDPOINT -like "http://10.92.0.*:2377/metadata/identity/oauth2/token?api-version=1.0"){
-    $identityEndpoint = " http://169.254.128.1:2377/metadata/identity/oauth2/token?api-version=1.0"
-}else{
+if (($ENV:PrivateEndpoints -eq 'Yes' -or $ENV:Vnet -eq 'Yes') -and $env:IDENTITY_ENDPOINT -like "http://10.92.0.*:2377/metadata/identity/oauth2/token?api-version=1.0") {
+    $identityEndpoint = "http://169.254.128.1:2377/metadata/identity/oauth2/token?api-version=1.0"
+} else {
     $identityEndpoint = $env:IDENTITY_ENDPOINT
 }
 $identityHeader = $env:IDENTITY_HEADER

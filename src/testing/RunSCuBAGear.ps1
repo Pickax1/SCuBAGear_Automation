@@ -178,11 +178,10 @@ $StorageModuleVersion = $MostRecentinStorage.Name.Split('-')[-1] -replace '.zip'
 $GitHubModuleVersion  = $ZipName.Split('-')[-1] -replace '.zip',''
 if ($StorageModuleVersion -lt $GitHubModuleVersion) {
     # Download the latest release from GitHub
-    $LocalPath = "C:\$ZipName"
-    Invoke-WebRequest -Uri $latestReleaseUrl -OutFile $LocalPath
+    Invoke-WebRequest -Uri $latestReleaseUrl -OutFile $destinationPath
 
     # Add latest ScubaGear module to Azure Storage
-    Set-AzStorageBlobContent -File $localPath -Container $containerName -Blob $ZipName -Context $ctx -Force -Confirm:$false
+    Set-AzStorageBlobContent -File $destinationPath -Container $containerName -Blob $ZipName -Context $ctx -Force -Confirm:$false
 
     if($null -eq $StorageModuleVersion){
         Write-Output "No previous version of ScubaGear found in Azure Storage."
@@ -206,10 +205,11 @@ if ($StorageModuleVersion -lt $GitHubModuleVersion) {
 
     # Extract the ZIP file
     Expand-Archive -Path $LocalPath -DestinationPath "C:\" -Force
+
+    $StartPath = $MostRecentinStorage.Name.Replace('.zip','')
 }
 
 Write-Output "Importing ScubaGear Module...."
-$StartPath = $MostRecentinStorage.Name.Replace('.zip','')
 $modulePath = "C:\$StartPath\PowerShell\ScubaGear\ScubaGear.psd1"
 Import-Module -Name $modulePath
 

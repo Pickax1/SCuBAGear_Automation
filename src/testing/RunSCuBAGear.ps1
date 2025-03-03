@@ -218,7 +218,7 @@ Write-Output "Initializing ScubaGear (This can take awhile)...."
 
 # Download OPA since BITS can't be used.
 $ProgressPreference = 'SilentlyContinue' # Speed up the download
-Invoke-WebRequest -Uri 'https://openpolicyagent.org/downloads/v0.69.0/opa_windows_amd64.exe' -OutFile c:\opa_windows_amd64.exe -UseBasicParsing
+Invoke-WebRequest -Uri 'https://openpolicyagent.org/downloads/v1.2.0/opa_windows_amd64.exe' -OutFile c:\opa_windows_amd64.exe -UseBasicParsing
 mkdir C:\.ScubaGear\Tools
 copy-item C:\opa_windows_amd64.exe C:\.ScubaGear\Tools
 

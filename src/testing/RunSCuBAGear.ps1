@@ -106,7 +106,8 @@ switch ($Environment.ToLower().Trim()) {
 Function Start-ResourceConnection {
     # Connect to Azure and Graph using the service principal and certificate thumbprint
     Write-Output "Connecting to Azure"
-    $azConnect = Connect-Azaccount -ServicePrincipal -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID -Environment $AzureEnvironment
+    $azConnect = Connect-Azaccount -Identity
+    #-ServicePrincipal -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID -Environment $AzureEnvironment
 }
 
 Start-ResourceConnection
@@ -218,7 +219,7 @@ Write-Output "Initializing ScubaGear (This can take awhile)...."
 
 # Download OPA since BITS can't be used.
 $ProgressPreference = 'SilentlyContinue' # Speed up the download
-Invoke-WebRequest -Uri 'https://openpolicyagent.org/downloads/v1.2.0/opa_windows_amd64.exe' -OutFile c:\opa_windows_amd64.exe -UseBasicParsing
+Invoke-WebRequest -Uri 'https://openpolicyagent.org/downloads/v1.3.0/opa_windows_amd64.exe' -OutFile c:\opa_windows_amd64.exe -UseBasicParsing
 mkdir C:\.ScubaGear\Tools
 copy-item C:\opa_windows_amd64.exe C:\.ScubaGear\Tools
 
@@ -246,3 +247,4 @@ if((Test-Path "C:\ScubaGearConfig.yaml" -ErrorAction 0)){
 
 Write-Output "Transferring ScubaGear results to storage"
 Invoke-StorageTransfer
+Sleep 3600

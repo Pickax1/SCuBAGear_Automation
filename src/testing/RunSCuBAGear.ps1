@@ -26,7 +26,10 @@ switch ($Environment) {
     }
 }
 
-$uri = $identityEndpoint + '&resource=' + $RawVaultURL + '&principalId=' + $principalId
+$resource = 'https%3A%2F%2Fmanagement.azure.com%2F'  # URL-encoded version of https://management.azure.com/
+#$uri = $identityEndpoint + '&resource=' + $RawVaultURL + '&principalId=' + $principalId
+$uri = $identityEndpoint + '&resource=' + $resource + '&principalId=' + $principalId
+
 $headers = @{
     secret = $identityHeader
     "Content-Type" = "application/x-www-form-urlencoded"
@@ -106,7 +109,7 @@ switch ($Environment.ToLower().Trim()) {
 Function Start-ResourceConnection {
     # Connect to Azure and Graph using the service principal and certificate thumbprint
     Write-Output "Connecting to Azure"
-    $azConnect = Connect-Azaccount -Identity
+    $azConnect = Connect-AzAccount -AccessToken $access_token -AccountId $principalId -TenantId $ENV:TenantID
     #-ServicePrincipal -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID -Environment $AzureEnvironment
 }
 

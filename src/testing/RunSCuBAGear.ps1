@@ -1,60 +1,52 @@
-$VaultName = $ENV:VaultName
-$CertName = $ENV:CertName
-
-# Retrieve an Access Token
-if (($ENV:PrivateEndpoints -eq 'Yes' -or $ENV:Vnet -eq 'Yes') -and $env:IDENTITY_ENDPOINT -like "http://10.92.0.*:2377/metadata/identity/oauth2/token?api-version=1.0") {
-    $identityEndpoint = "http://169.254.128.1:2377/metadata/identity/oauth2/token?api-version=1.0"
-} else {
-    $identityEndpoint = $env:IDENTITY_ENDPOINT
-}
-$identityHeader = $env:IDENTITY_HEADER
+# Environment values
 $principalId = $ENV:MIPrincipalID
+$clientId    = $ENV:ClientID       # App registration ID
+$tenantId    = $ENV:TenantID
 $Environment = $ENV:TenantLocation
 
-switch ($Environment) {
-    {"commercial" -or "gcc"} {
-        $VaultURL = "https://$($VaultName).vault.azure.net"
-        $RawVaultURL = "https%3A%2F%2F" + "vault.azure.net"
-    }
-    "gcchigh" {
-        $VaultURL = "https://$($VaultName).vault.usgovcloudapi.net"
-        $RawVaultURL = "https%3A%2F%2F" + "vault.usgovcloudapi.net"
-    }
-    "dod" {
-        $VaultURL = "https://$($VaultName).vault.microsoft.scloud"
-        $RawVaultURL = "https%3A%2F%2F" + "vault.microsoft.scloud"
-    }
+# ARM environment resolution
+$AzureEnvironment = switch ($Environment.ToLower()) {
+    "commercial" { "AzureCloud" }
+    "gcc"        { "AzureCloud" }
+    "gcchigh"    { "AzureUSGovernment" }
+    "dod"        { "AzureUSGovernment" }
+    default      { "AzureCloud" }
 }
 
-$resource = 'https%3A%2F%2Fmanagement.azure.com%2F'  # URL-encoded version of https://management.azure.com/
-#$uri = $identityEndpoint + '&resource=' + $RawVaultURL + '&principalId=' + $principalId
-$uri = $identityEndpoint + '&resource=' + $resource + '&principalId=' + $principalId
+# Normalize endpoint
+$identityEndpoint = if (($ENV:PrivateEndpoints -eq 'Yes' -or $ENV:Vnet -eq 'Yes') -and
+    $env:IDENTITY_ENDPOINT -like "http://10.92.0.*:2377/*") {
+    "http://169.254.128.1:2377/metadata/identity/oauth2/token?api-version=1.0"
+} else {
+    $env:IDENTITY_ENDPOINT
+}
+
+# Step 1: Get initial token for AzureADTokenExchange
+$audience = 'api://AzureADTokenExchange'
+$encodedAudience = [uri]::EscapeDataString($audience)
 
 $headers = @{
-    secret = $identityHeader
+    secret = $env:IDENTITY_HEADER
     "Content-Type" = "application/x-www-form-urlencoded"
 }
-$response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+$uri = "$identityEndpoint&resource=$encodedAudience&principalId=$principalId"
+$exchangeToken = (Invoke-RestMethod -Uri $uri -Headers $headers -Method GET).access_token
 
-# Access values from Key Vault with token
-$accessToken = $Response.access_token
-$headers2 = @{
-    Authorization = "Bearer $accessToken"
-}
+# Step 2: Exchange token for ARM access
+$tokenEndpoint = "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token"
+$scope = "https://management.azure.com/.default"
+$formBody = @{
+    client_id = $clientId
+    client_assertion = $exchangeToken
+    client_assertion_type = 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer'
+    scope = $scope
+    grant_type = 'client_credentials'
+} | ForEach-Object {
+    [System.Web.HttpUtility]::UrlEncode($_.Key) + '=' + [System.Web.HttpUtility]::UrlEncode($_.Value)
+} -join '&'
 
-$PrivKey = (Invoke-RestMethod -Uri "$($VaultURL)/Secrets/$($CertName)/?api-version=7.4" -Headers $headers2).Value
-
-# Decode the Base64 string
-$pfxBytes = [Convert]::FromBase64String($PrivKey)
-
-# Create an X509Certificate2 object from the PFX bytes
-$pfxCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
-$pfxCert.Import($pfxBytes, $null, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::DefaultKeySet)
-
-$store2 = New-Object System.Security.Cryptography.X509Certificates.X509Store("My", "CurrentUser")
-$store2.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
-$store2.Add($pfxCert)
-$store2.Close()
+$tokenHeaders = @{ "Content-Type" = "application/x-www-form-urlencoded" }
+$armToken = (Invoke-RestMethod -Uri $tokenEndpoint -Method POST -Headers $tokenHeaders -Body $formBody).access_token
 
 if((Get-PackageProvider -Name 'NuGet' -ListAvailable -Erroraction SilentlyContinue)){
     # NuGet is installed
@@ -81,135 +73,116 @@ Try{
     Write-Error -Message $_.Exception
 }
 
-# Define some variables for Graph connection and writing to the storage account
-$CertName = 'CN=' + $ENV:CertName
-$CertificateThumbprint = (Get-ChildItem -Path 'Cert:\CurrentUser\My' | Where-Object { $_.Subject -eq $CertName }).Thumbprint
-$Date = Get-Date -Format FileDateTime
-$Environment = $ENV:TenantLocation
-$TenantID = $ENV:TenantID
-$ClientID = $ENV:ClientID
-$Org = $ENV:Org
-$StorageAccountName = $ENV:StorageAccountName
+# Step 3: Connect with token
+Connect-AzAccount -AccessToken $armToken -AccountId $clientId -TenantId $tenantId
 
-switch ($Environment.ToLower().Trim()) {
-    "commercial" {
-        $AzureEnvironment = "AzureCloud"
-    }
-    "gcc" {
-        $AzureEnvironment = "AzureCloud"
-    }
-    "gcchigh" {
-        $AzureEnvironment = "AzureUSGovernment"
-    }
-    "dod" {
-        $AzureEnvironment = "AzureUSGovernment"
-    }
+# Create REST headers for Storage
+$storageHeaders = @{
+    Authorization  = "Bearer $armToken"
+    "x-ms-version" = "2022-11-02"
 }
 
-Function Start-ResourceConnection {
-    # Connect to Azure and Graph using the service principal and certificate thumbprint
-    Write-Output "Connecting to Azure"
-    $azConnect = Connect-AzAccount -AccessToken $access_token -AccountId $principalId -TenantId $ENV:TenantID
-    #-ServicePrincipal -CertificateThumbprint $CertificateThumbprint -ApplicationID $ClientID -TenantID $TenantID -Environment $AzureEnvironment
-}
-
-Start-ResourceConnection
-$ctx = New-AzStorageContext -StorageAccountName $StorageAccountName -UseConnectedAccount
-
+# Upload results to blob storage
 function Invoke-StorageTransfer {
-    Try{
-        Write-Output "Service Principal Connected to Azure for writing result to Storage Account"
-        $OutPutContainerName = "scuba-$TenantID-$Date".ToLower()
-        $Report = (Get-ChildItem -Path "C:\" -Filter "M365Baseline*" | Sort-Object -Descending -Property LastWriteTime | select-object -First 1).Name
+    try {
+        Write-Output "Federated identity successfully connected to Azure."
 
-        Try{
-            $StorageContainer = New-AzStorageContainer -Name $OutPutContainerName -Context $ctx
-            Write-Output "New Azure Blob Container Created for ScubaGear Results - $OutPutContainerName"
-        }Catch{
-            Write-Output"Azure Blob Container Exists"
-        }
+        $OutPutContainerName = "scuba-$tenantId-$Date".ToLower()
+        $Report = (Get-ChildItem -Path "C:\" -Filter "M365Baseline*" | 
+                   Sort-Object -Property LastWriteTime -Descending | 
+                   Select-Object -First 1).Name
 
-        Try{
-            if($Null -ne $Report){
-                $Items = Get-ChildItem -Path "C:\$Report" -Recurse | Set-AzStorageBlobContent -Container $OutPutContainerName -Context $ctx -WarningAction SilentlyContinue
-                Write-Output "The below items have been Uploaded to Azure Blob Storage"
+        # Create container (if it doesn't exist)
+        $containerUri = "https://$StorageAccountName.blob.core.windows.net/$OutPutContainerName?restype=container"
+        Invoke-RestMethod -Uri $containerUri -Method PUT -Headers $storageHeaders -ErrorAction SilentlyContinue
+        Write-Output "Blob container ready: $OutPutContainerName"
 
-                ForEach($Item in $Items.Name){
-                    Write-Output "  - $($Item)"
-                }
-            }else{
-                Write-Error "No report was generated."
+        if ($null -ne $Report) {
+            Get-ChildItem -Path "C:\$Report" -Recurse | ForEach-Object {
+                $filePath = $_.FullName
+                $relativePath = $_.FullName.Substring(("C:\$Report\").Length)
+                $blobUri = "https://$StorageAccountName.blob.core.windows.net/$OutPutContainerName/$relativePath"
+
+                Invoke-RestMethod -Uri $blobUri -Method PUT -Headers @{
+                    Authorization = "Bearer $armToken"
+                    "x-ms-version" = "2022-11-02"
+                    "x-ms-blob-type" = "BlockBlob"
+                    "x-ms-date" = (Get-Date).ToUniversalTime().ToString("R")
+                } -InFile $filePath -ContentType "application/octet-stream"
+
+                Write-Output "Uploaded: $relativePath"
             }
-        }catch{
-            Write-Output "Unable to Upload Report to Blob Storage"
+        } else {
+            Write-Error "No report was found to upload."
         }
-    }Catch{
-        Write-Error -Message $_.Exception
-        Write-Output "Unable to create blob container"
+    } catch {
+        Write-Error "Storage upload failed: $_"
     }
 }
 
-# Download ScubaGear Module from Storage Account
 $containerName = $ENV:ContainerName
+$storageAccount = $ENV:StorageAccountName
+$blobBaseUri = "https://$storageAccount.blob.core.windows.net/$containerName"
+$headers = @{
+    Authorization  = "Bearer $armToken"
+    "x-ms-version" = "2022-11-02"
+}
 
-# Get the latest release information from GitHub
+$uri = "$blobBaseUri?restype=container&comp=list"
+$blobList = Invoke-RestMethod -Uri $uri -Method GET -Headers $headers
+
+$StorageItems = $blobList.EnumerationResults.Blobs.Blob
+$MostRecentinStorage = $StorageItems | Where-Object { $_.Name -like "ScubaGear-*.zip" } | Sort-Object -Property Last-Modified -Descending | Select-Object -First 1
+$ConfiginStorage = $StorageItems | Where-Object { $_.Name -eq "ScubaGearConfig.yaml" }
+
+$ConfigFilePath = "C:\ScubaGearConfig.yaml"
+$ConfigUri = "$blobBaseUri/$($ConfiginStorage.Name)"
+Invoke-RestMethod -Uri $ConfigUri -Headers $headers -OutFile $ConfigFilePath
+
+(Get-Content $ConfigFilePath) `
+    -replace '\${CertificateThumbprint}', $CertificateThumbprint `
+    -replace '\${ClientId}', $ClientID `
+    -replace '\${Org}', $Org `
+    -replace '\${Environment}', $Environment |
+    Set-Content $ConfigFilePath
+
+# GitHub info
 $githubApiUrl = "https://api.github.com/repos/cisagov/ScubaGear/releases/latest"
-$githubResponse = Invoke-RestMethod -Uri $githubApiUrl
+$githubResponse = Invoke-RestMethod -Uri $githubApiUrl -Headers @{ "User-Agent" = "PowerShell" }
 $latestReleaseUrl = ($githubResponse.assets | Where-Object { $_.name -like "ScubaGear*.zip" }).browser_download_url
-$ZipName = $githubResponse.Assets.name
-#$GitHubDate = $githubResponse.created_at
+$ZipName = $githubResponse.assets.name
 $destinationPath = "C:\$ZipName"
 
-# Get the current version stored in Azure Storage
-$StorageItems = Get-AzStorageBlob -Container $containerName -Context $ctx
-$MostRecentinStorage = ($StorageItems | Where-Object {$_.Name -like "ScubaGear-*.zip"}  | Sort-Object -Descending LastModified)
-$ConfiginStorage = $StorageItems | Where-Object {$_.Name -eq "ScubaGearConfig.yaml"}
+$StorageVersion = $MostRecentinStorage.Name.Split('-')[-1] -replace '.zip',''
+$GitHubVersion  = $ZipName.Split('-')[-1] -replace '.zip',''
 
-# Save configuration file to local disk
-$ConfigFilePath = "C:\ScubaGearConfig.yaml"
-$GetConfig = Get-AzStorageBlobContent -Container $containerName -Blob $ConfiginStorage.Name -Destination $ConfigFilePath -Context $ctx
-
-# Replace ScubaGear config file with variables from container
-$ConfigFileContents = Get-Content $ConfigFilePath
-$ConfigFileContents = $ConfigFileContents -replace '\${CertificateThumbprint}', $CertificateThumbprint
-$ConfigFileContents = $ConfigFileContents -replace '\${ClientId}', $ClientID
-$ConfigFileContents = $ConfigFileContents -replace '\${Org}', $Org
-$ConfigFileContents = $ConfigFileContents -replace '\${Environment}', $Environment
-$ConfigFileContents | Set-Content $ConfigFilePath
-
-# Compare the versions and update the blob if necessary
-$StorageModuleVersion = $MostRecentinStorage.Name.Split('-')[-1] -replace '.zip',''
-$GitHubModuleVersion  = $ZipName.Split('-')[-1] -replace '.zip',''
-if ($StorageModuleVersion -lt $GitHubModuleVersion) {
-    # Download the latest release from GitHub
+if ($StorageVersion -lt $GitHubVersion) {
     Invoke-WebRequest -Uri $latestReleaseUrl -OutFile $destinationPath
 
-    # Add latest ScubaGear module to Azure Storage
-    Set-AzStorageBlobContent -File $destinationPath -Container $containerName -Blob $ZipName -Context $ctx -Force -Confirm:$false
+    # Upload latest
+    $uploadUri = "$blobBaseUri/$ZipName"
+    Invoke-RestMethod -Uri $uploadUri -Method PUT -Headers @{
+        Authorization = "Bearer $armToken"
+        "x-ms-version" = "2022-11-02"
+        "x-ms-blob-type" = "BlockBlob"
+        "x-ms-date" = (Get-Date).ToUniversalTime().ToString("R")
+    } -InFile $destinationPath -ContentType "application/zip"
 
-    if($null -eq $StorageModuleVersion){
-        Write-Output "No previous version of ScubaGear found in Azure Storage."
-    }else{
-        # Remove older version of the ScubaGear module from Azure Storage
-        Write-Output "Removing older version of ScubaGear from Azure Storage."
-        $removeOld = Remove-AzStorageBlob -Container $containerName -Blob $MostRecentinStorage.Name -Context $ctx -Force -Confirm:$False
+    # Remove old version if present
+    if ($null -ne $MostRecentinStorage) {
+        $deleteUri = "$blobBaseUri/$($MostRecentinStorage.Name)"
+        Invoke-RestMethod -Uri $deleteUri -Method DELETE -Headers $headers
     }
 
-    Write-Output "The file in Azure Storage has been updated with the latest version from GitHub."
-
-    # Extract the ZIP file
     Expand-Archive -Path $destinationPath -DestinationPath "C:\" -Force
-
     $StartPath = $ZipName.Replace('.zip','')
+    Write-Output "Updated ScubaGear module uploaded and extracted."
 
 } else {
     Write-Output "The file in Azure Storage is already up-to-date."
-    $LocalPath = "C:\$($MostRecentinStorage.Name)"
-    Get-AzStorageBlobContent -Container $containerName -Blob $MostRecentinStorage.Name -Destination $LocalPath -Context $ctx
-
-    # Extract the ZIP file
-    Expand-Archive -Path $LocalPath -DestinationPath "C:\" -Force
-
+    $localPath = "C:\$($MostRecentinStorage.Name)"
+    Invoke-RestMethod -Uri "$blobBaseUri/$($MostRecentinStorage.Name)" -Headers $headers -OutFile $localPath
+    Expand-Archive -Path $localPath -DestinationPath "C:\" -Force
     $StartPath = $MostRecentinStorage.Name.Replace('.zip','')
 }
 
